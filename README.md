@@ -29,21 +29,25 @@ With an emphasis on security, inclusivity, simplicity, and caregiver integration
 ## 📦 Setup Instructions
 
 1. Clone this repository:
-   ```bash
+   ```
+   bash
    git clone https://github.com/your-org/sagecare2.0.git
    cd sagecare2.0
    
 2. Set up the backend environment:
-   ```cd backend
+   ```
+   cd backend
    python -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
    
 3. Start the backend server:
-   ```python app.py
+   ```
+   python app.py
    
 4. Set up the frontend environment (React Native):
-   ```cd frontend
+   ```
+   cd frontend
    npm install
    npm start
 
@@ -57,15 +61,25 @@ With an emphasis on security, inclusivity, simplicity, and caregiver integration
 
 sagecare2.0/
 │
+
 ├── data collection/                     # Holds all datasets collected for model training
+
 │── dev/                                 # Production code and deployment templates
+
 │── documentation/                       # Documentation for models and development
+
 │── training/                            # Notebooks for model training and evaluation
+
 │
+
 ├── .gitignore                           # gitignore file
+
 │
+
 ├── README.md                            # Project description and breakdown
+
 │
+
 └── orchestration.ipynb                  
 
 ## 👥 Contributors

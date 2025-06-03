@@ -60,27 +60,28 @@ With an emphasis on security, inclusivity, simplicity, and caregiver integration
 ## 📁 Project Structure
 
 sagecare2.0/
-│
 
-├── data collection/                   
+    │
 
-│── dev/                                
+    ├── data collection/                   
 
-│── documentation/                      
+    │── dev/                                
 
-│── training/                        
+    │── documentation/                      
 
-│
+    │── training/                        
 
-├── .gitignore                        
+    │
 
-│
+    ├── .gitignore                        
 
-├── README.md                             
+    │
 
-│
+    ├── README.md                             
 
-└── orchestration.ipynb                  
+    │
+
+    └── orchestration.ipynb                  
 
 ## 👥 Contributors
 

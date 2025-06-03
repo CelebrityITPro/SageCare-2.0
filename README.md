@@ -62,21 +62,21 @@ With an emphasis on security, inclusivity, simplicity, and caregiver integration
 sagecare2.0/
 │
 
-├── data collection/                     # Holds all datasets collected for model training
+├── data collection/                   
 
-│── dev/                                 # Production code and deployment templates
+│── dev/                                
 
-│── documentation/                       # Documentation for models and development
+│── documentation/                      
 
-│── training/                            # Notebooks for model training and evaluation
-
-│
-
-├── .gitignore                           # gitignore file
+│── training/                        
 
 │
 
-├── README.md                             # Project description and breakdown
+├── .gitignore                        
+
+│
+
+├── README.md                             
 
 │
 

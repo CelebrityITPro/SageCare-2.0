@@ -32,3 +32,51 @@ With an emphasis on security, inclusivity, simplicity, and caregiver integration
    ```bash
    git clone https://github.com/your-org/sagecare2.0.git
    cd sagecare2.0
+   
+2. Set up the backend environment:
+   ```cd backend
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   
+3. Start the backend server:
+   ```python app.py
+   
+4. Set up the frontend environment (React Native):
+   ```cd frontend
+   npm install
+   npm start
+
+## 🔍 Usage Examples
+
+- Upload a food photo to receive calorie and nutrient breakdown.
+- Type or speak symptoms like “burning chest pain” to get AI-predicted diagnosis and recommended next steps.
+- Join a video consultation and get real-time captions with a downloadable transcript post-visit.
+
+## 📁 Project Structure
+
+sagecare2.0/
+│
+├── data collection/                     # Holds all datasets collected for model training
+│── dev/                                 # Production code and deployment templates
+│── documentation/                       # Documentation for models and development
+│── training/                            # Notebooks for model training and evaluation
+│
+├── .gitignore                           # gitignore file
+│
+├── README.md                            # Project description and breakdown
+│
+└── orchestration.ipynb                  
+
+## 👥 Contributors
+
+- Agu Jennifer
+- Ifediorah Kenechukwu
+- Owulu Amarachukwu
+- Palakodeti S. Ravi
+- Sharma Vaibhav
+- Prof. Anasuya Bhima (Advisor)
+
+## 📄 License
+
+This project is for academic purposes only.

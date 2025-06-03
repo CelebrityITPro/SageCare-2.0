@@ -76,7 +76,7 @@ sagecare2.0/
 
 │
 
-├── README.md                            # Project description and breakdown
+├── README.md                             # Project description and breakdown
 
 │
 

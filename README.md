@@ -50,32 +50,7 @@ With an emphasis on security, inclusivity, simplicity, and caregiver integration
    cd frontend
    npm install
    npm start
-
-## 🔍 Usage Examples
-
-- Upload a food photo to receive calorie and nutrient breakdown.
-- Type or speak symptoms like “burning chest pain” to get AI-predicted diagnosis and recommended next steps.
-- Join a video consultation and get real-time captions with a downloadable transcript post-visit.
-
-## 📁 Project Structure
-
-    sagecare2.0/
-
-        │
-
-        ├── data collection/                   
-
-        │── dev/                                
-
-        │── documentation/                      
-
-        │── training/                        
-
-        ├── .gitignore                        
-
-        ├── README.md                             
-
-        └── orchestration.ipynb                  
+          
 
 ## 👥 Contributors
 

@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "incremental": false,
+    "composite": false,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*"],
+      "@/test/*": ["test/*"]
+    }
+  },
+  "include": [
+    "src",
+    "test",
+    "vite.config.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.json",
+    "./config.js"
+  ],
+  "exclude": ["node_modules"]
+}

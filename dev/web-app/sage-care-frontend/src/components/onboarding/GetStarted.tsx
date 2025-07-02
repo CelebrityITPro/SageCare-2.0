@@ -1,40 +1,49 @@
 import Input from "../Input";
-import CustomButton from "../CustomButton";
 
-const GetStarted = () => {
+const GetStarted = ({ formik }) => {
   return (
-    // <Box maxW={"534px"} w={"full"} mx="auto">
-    //   <Heading fontSize={"32px"} fontWeight={600} lineHeight={"40px"}>
-    //     Let’s get you started
-    //   </Heading>
-    //   <Text
-    //     fontSize={"14px"}
-    //     fontWeight={400}
-    //     lineHeight={"20px"}
-    //     letterSpacing={"-2%"}
-    //     mt={"8px"}
-    //     color={Colors.textGray}
-    //   >
-    //     {`We’ll create an account if you don’t have one yet.`}
-    //   </Text>
     <>
+      <Input
+        label="First name"
+        type="text"
+        placholder="Enter first name"
+        id="firstName"
+        name="firstName"
+        value={formik.values.firstName}
+        onChange={formik.handleChange}
+        error={formik.touched.firstName && Boolean(formik.errors.firstName)}
+      />
+      <Input
+        label="Last name"
+        type="text"
+        placholder="Enter last name"
+        id="lastName"
+        name="lastName"
+        value={formik.values.lastName}
+        onChange={formik.handleChange}
+        error={formik.touched.lastName && Boolean(formik.errors.lastName)}
+      />
       <Input
         label="Email Address"
         type="email"
         placholder="Enter email address"
+        id="email"
+        name="email"
+        value={formik.values.email}
+        onChange={formik.handleChange}
+        error={formik.touched.email && Boolean(formik.errors.email)}
       />
-
-      <CustomButton
-        label="Next"
-        variant="primary"
-        size="lg"
-        w="full"
-        mt="32px"
-        color={"white"}
+      <Input
+        label="Username"
+        type="text"
+        placholder="Choose a username"
+        id="username"
+        name="username"
+        value={formik.values.username}
+        onChange={formik.handleChange}
+        error={formik.touched.username && Boolean(formik.errors.username)}
       />
     </>
-
-    // </Box>
   );
 };
 

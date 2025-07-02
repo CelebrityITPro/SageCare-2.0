@@ -5,11 +5,13 @@ import React, { ReactNode } from "react";
 interface QuickActionTemplateProps {
   title: string;
   subtitle: string;
+  action?: () => void;
 }
 
 export const QuickActionTemplate = ({
   title,
   subtitle,
+  action,
 }: QuickActionTemplateProps) => {
   return (
     <Flex
@@ -21,6 +23,7 @@ export const QuickActionTemplate = ({
       cursor={"pointer"}
       _hover={{ bg: "#F0F0F0", transform: "translateY(-2px)" }}
       transition={"all .3s linear"}
+      onClick={action}
     >
       <Center boxSize={"48px"} borderRadius={"8px"} bg="purple.100"></Center>
       <Box>

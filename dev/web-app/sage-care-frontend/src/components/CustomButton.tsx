@@ -21,6 +21,7 @@ const CustomButton = ({
   return (
     <Button
       bgColor={ButtonColors[variant].bg}
+      // _hover={{ bgColor: ButtonColors[variant].bg, scale: 1.2 }}
       size={size}
       borderRadius={"12px"}
       fontFamily={"Inter"}

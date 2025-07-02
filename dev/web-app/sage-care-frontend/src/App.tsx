@@ -5,6 +5,7 @@ import { Route, Routes } from "react-router-dom";
 import { ROUTES } from "./routes";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         {/* AUTH Routes */}
         <Route path={ROUTES.SIGNUP} element={<Signup />} />
+        <Route path={ROUTES.LOGIN} element={<Login />} />
 
         {/* Dashoard */}
         <Route path={ROUTES.HOME} element={<DashboardLayout />}>

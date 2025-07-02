@@ -1,10 +1,18 @@
 import { Box, Flex, Stack } from "@chakra-ui/react";
 import SideNav from "../components/dashboard/SideNav";
-import React from "react";
+import React, { useEffect } from "react";
 import NavBar from "../components/dashboard/NavBar";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { ROUTES } from "../routes";
 
 const DashboardLayout = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) navigate(ROUTES.LOGIN);
+  }, []);
+
   return (
     <Flex h="100vh" w="100vw" bg="#F7F7F7">
       <SideNav />

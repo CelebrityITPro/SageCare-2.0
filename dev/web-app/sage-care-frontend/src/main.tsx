@@ -4,14 +4,18 @@ import App from "./App";
 import { ChakraProvider } from "@chakra-ui/react";
 import * as ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const root = document.getElementById("root") as HTMLElement;
+const queryClient = new QueryClient();
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <ChakraProvider>
       <BrowserRouter>
-        <App />
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
       </BrowserRouter>
     </ChakraProvider>
   </React.StrictMode>

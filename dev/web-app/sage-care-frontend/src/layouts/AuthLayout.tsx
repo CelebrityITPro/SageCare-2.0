@@ -1,8 +1,17 @@
 import { Box, Flex, Image, Text } from "@chakra-ui/react";
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Colors } from "../components/Colors";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../routes";
 
 const AuthLayout = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) navigate(ROUTES.HOME);
+  }, []);
+
   return (
     <Flex w="full" h="100vh" align="center" justify="center">
       <Box w="45%" h="100vh" bg="gray">
@@ -46,7 +55,7 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
           bgSize={"cover"}
         ></Box>
       </Box>
-      <Box w="55%" bg="white" p="20px">
+      <Box w="55%" bg="white" p="20px" pl="80px">
         {children}
       </Box>
     </Flex>

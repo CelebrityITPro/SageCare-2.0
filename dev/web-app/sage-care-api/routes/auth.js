@@ -68,29 +68,62 @@ router.post("/sign-up", async (req, res) => {
 // Login
 router.post("/login", async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.body.username });
+    console.log("Login attempt with body:", req.body);
+    console.log("Environment variables check:");
+    console.log("PW_ENCRYPT_KEY exists:", !!process.env.PW_ENCRYPT_KEY);
+    console.log("JWT_SECRET_KEY exists:", !!process.env.JWT_SECRET_KEY);
+    console.log("PW_ENCRYPT_KEY first 5 chars:", process.env.PW_ENCRYPT_KEY ? process.env.PW_ENCRYPT_KEY.substring(0, 5) + "..." : "undefined");
+    console.log("JWT_SECRET_KEY first 5 chars:", process.env.JWT_SECRET_KEY ? process.env.JWT_SECRET_KEY.substring(0, 5) + "..." : "undefined");
+    
+    // Check if environment variables are loaded
+    if (!process.env.PW_ENCRYPT_KEY) {
+      console.error("PW_ENCRYPT_KEY is not set!");
+      return res.status(500).json({ error: "Server configuration error" });
+    }
+    
+    if (!process.env.JWT_SECRET_KEY) {
+      console.error("JWT_SECRET_KEY is not set!");
+      return res.status(500).json({ error: "Server configuration error" });
+    }
+    
+    const user = await User.findOne({ email: req.body.email });
+    console.log("User found:", !!user);
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const decryptedPw = CryptoJS.AES.decrypt(
-      user.password,
-      process.env.PW_ENCRYPT_KEY
-    ).toString(CryptoJS.enc.Utf8);
+    // Try to decrypt the password with better error handling
+    let decryptedPw;
+    try {
+      decryptedPw = CryptoJS.AES.decrypt(
+        user.password,
+        process.env.PW_ENCRYPT_KEY
+      ).toString(CryptoJS.enc.Utf8);
+      console.log("Password decryption successful");
+    } catch (decryptError) {
+      console.error("Password decryption failed:", decryptError);
+      return res.status(500).json({ 
+        error: "Password decryption failed. This might be due to a configuration change." 
+      });
+    }
 
     if (decryptedPw !== req.body.password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+    
     const accessToken = jwt.sign(
       { id: user._id, isAdmin: user?.isAdmin },
       process.env.JWT_SECRET_KEY,
       { algorithm: "HS256" }
     );
+    console.log("JWT token created successfully");
+    
     const { password, ...rest } = user._doc;
     return res.status(200).json({ ...rest, accessToken });
   } catch (err) {
-    return res.status(500).json(err);
+    console.error("Login error details:", err);
+    return res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 

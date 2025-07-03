@@ -10,7 +10,7 @@ const AppointmentSchema = mongoose.Schema(
     },
     patient: {
       type: Schema.Types.ObjectId,
-      ref: "Patient",
+      ref: "User",
       required: true,
     },
     date: {
@@ -32,6 +32,13 @@ const AppointmentSchema = mongoose.Schema(
     },
     notes: {
       type: String,
+    },
+    jitsiLink: {
+      type: String,
+    },
+    timezone: {
+      type: String,
+      required: false,
     },
   },
   {

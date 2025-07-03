@@ -24,6 +24,9 @@ export const useLoginUser = () => {
           if (data.accessToken) {
             localStorage.setItem("token", data?.accessToken);
             localStorage.setItem("userId", data?._id);
+            // Store the full user object (excluding password and accessToken)
+            const { password, accessToken, ...userData } = data;
+            localStorage.setItem("user", JSON.stringify(userData));
             return res?.data;
           }
           throw new Error("No access token");

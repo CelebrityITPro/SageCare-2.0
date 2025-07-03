@@ -6,6 +6,7 @@ import { ROUTES } from "./routes";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import VideoConsultation from "./pages/VideoConsultation";
 
 function App() {
   return (
@@ -15,7 +16,10 @@ function App() {
         <Route path={ROUTES.SIGNUP} element={<Signup />} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
 
-        {/* Dashoard */}
+        {/* Video Consultation - Outside Dashboard Layout */}
+        <Route path={ROUTES.VIDEO_CONSULTATION} element={<VideoConsultation />} />
+
+        {/* Dashboard */}
         <Route path={ROUTES.HOME} element={<DashboardLayout />}>
           <Route index element={<Home />} />
         </Route>

@@ -6,6 +6,7 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
+import { useState } from "react";
 import { Colors } from "../components/Colors";
 import React from "react";
 import Appointments from "../components/home/Appointments";
@@ -19,6 +20,13 @@ const Home = () => {
 
   const { data, isLoading } = useGetUserDetails();
   console.log(data);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleAppointmentCreated = () => {
+    // Trigger a refresh of the appointments list
+    setRefreshKey(prev => prev + 1);
+  };
 
   return (
     <Box w="full">
@@ -43,7 +51,7 @@ const Home = () => {
           </Text>
           <Flex mt="24px" gap="12px">
             <Box flex="2">
-              <Appointments />
+              <Appointments refreshKey={refreshKey} />
             </Box>
             <Box flex="1">
               <NutritionSummary />
@@ -74,7 +82,11 @@ const Home = () => {
             </Box>
           </Flex>
 
-          <BookDoctorModal isOpen={isOpen} onClose={onClose} />
+          <BookDoctorModal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            onAppointmentCreated={handleAppointmentCreated}
+          />
         </>
       )}
     </Box>

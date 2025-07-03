@@ -3,4 +3,5 @@ export const ROUTES = {
   SIGNUP: "/signup",
   LOGIN: "/login",
   ONBOARDING: "/onboarding",
+  VIDEO_CONSULTATION: "/consultation/:appointmentId",
 };

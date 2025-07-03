@@ -5,6 +5,20 @@ const { verifyAdmin, verifyAuth } = require("./verifyToken");
 
 const User = require("../models/User");
 
+// Public endpoint for video consultation (no auth required)
+router.get("/public/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const { password, ...rest } = user._doc;
+    res.status(200).json({ user: rest });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 router.get("/", verifyAuth, async (req, res) => {
   try {
     const users = await User.find().sort({ id: -1 }).limit(10);
@@ -16,11 +30,21 @@ router.get("/", verifyAuth, async (req, res) => {
 
 router.get("/:id", verifyAuth, async (req, res) => {
   try {
+    console.log("User route - ID:", req.params.id);
+    console.log("User route - User from token:", req.user);
+    
     const user = await User.findById(req.params.id);
+    console.log("User route - Found user:", !!user);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
     const { password, ...rest } = user._doc;
     res.status(200).json({ ...rest });
   } catch (error) {
-    return res.status(500).json({ message: "Server error" });
+    console.error("User route error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 

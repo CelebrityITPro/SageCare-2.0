@@ -31,13 +31,24 @@ const Login = () => {
         email: values.email,
         password: values.password,
       };
+      console.log("Attempting login with data:", data);
       loginUser(
         { data },
         {
-          onSuccess: (res) => {
-            localStorage.setItem("token", res?.accessToken);
-            navigate("/");
-          },
+                  onSuccess: (res) => {
+          console.log("Login successful:", res);
+          localStorage.setItem("token", res?.accessToken);
+          localStorage.setItem("userId", res?._id);
+          // Store the full user object (excluding password and accessToken)
+          const { password, accessToken, ...userData } = res;
+          localStorage.setItem("user", JSON.stringify(userData));
+          console.log("Stored user data:", userData);
+          navigate("/");
+        },
+          onError: (error) => {
+            console.error("Login failed:", error);
+            alert("Login failed: " + (error?.message || "Unknown error"));
+          }
         }
       );
     },

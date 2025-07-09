@@ -27,7 +27,7 @@ const AppointmentSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled"],
+      enum: ["pending", "confirmed", "cancelled", "completed", "missed"],
       default: "pending",
     },
     notes: {
@@ -39,6 +39,39 @@ const AppointmentSchema = mongoose.Schema(
     timezone: {
       type: String,
       required: false,
+    },
+    // Participation tracking fields
+    participation: {
+      patientJoined: {
+        type: Boolean,
+        default: false,
+      },
+      doctorJoined: {
+        type: Boolean,
+        default: false,
+      },
+      patientJoinTime: {
+        type: Date,
+      },
+      doctorJoinTime: {
+        type: Date,
+      },
+      meetingDuration: {
+        type: Number, // in minutes
+      },
+      lastActivity: {
+        type: Date,
+      },
+    },
+    // Meeting outcome tracking
+    meetingOutcome: {
+      type: String,
+      enum: ["completed", "missed", "cancelled", "rescheduled"],
+      default: "missed",
+    },
+    // Notes about the meeting
+    meetingNotes: {
+      type: String,
     },
   },
   {

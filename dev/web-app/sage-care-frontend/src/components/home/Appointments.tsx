@@ -1,6 +1,27 @@
 import React, { useState, useEffect } from "react";
 import CardTemplate from "./CardTemplate";
-import { Box, Image, Text, Button, VStack, HStack, Badge, Spinner, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton } from "@chakra-ui/react";
+import { 
+  Box, 
+  Image, 
+  Text, 
+  Button, 
+  VStack, 
+  HStack, 
+  Badge, 
+  Spinner, 
+  Modal, 
+  ModalOverlay, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  ModalCloseButton,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon
+} from "@chakra-ui/react";
 import { Colors } from "../Colors";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +34,17 @@ interface Appointment {
   endTime: string;
   notes?: string;
   jitsiLink: string;
+  participation?: {
+    patientJoined: boolean;
+    doctorJoined: boolean;
+    patientJoinTime?: string;
+    doctorJoinTime?: string;
+    meetingDuration?: number;
+    lastActivity?: string;
+  };
+  meetingOutcome?: string;
+  meetingNotes?: string;
+  status?: string;
 }
 
 interface Doctor {
@@ -82,10 +114,48 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
     }
   };
 
-  const joinConsultation = (appointmentId: string) => {
-    const appointment = appointments.find(a => a._id === appointmentId);
-    setSelectedAppointment(appointment || null);
-    setModalOpen(true);
+  const joinConsultation = async (appointmentId: string) => {
+    try {
+      // Get current user ID
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user._id;
+      
+      if (!userId) {
+        console.error('No user ID found');
+        return;
+      }
+
+      // Track that the patient joined the meeting
+      const joinResponse = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          participantType: 'patient',
+          userId: userId
+        }),
+      });
+
+      if (joinResponse.ok) {
+        console.log('Patient join tracked successfully');
+        // Refresh appointments to get updated participation data
+        await fetchAppointments();
+      } else {
+        console.error('Failed to track patient join');
+      }
+
+      // Open the consultation modal
+      const appointment = appointments.find(a => a._id === appointmentId);
+      setSelectedAppointment(appointment || null);
+      setModalOpen(true);
+    } catch (error) {
+      console.error('Error tracking consultation join:', error);
+      // Still open the modal even if tracking fails
+      const appointment = appointments.find(a => a._id === appointmentId);
+      setSelectedAppointment(appointment || null);
+      setModalOpen(true);
+    }
   };
 
   const handleStartConsultation = () => {
@@ -103,9 +173,107 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
     };
   };
 
+  const getParticipationStatus = (appointment: Appointment) => {
+    if (!appointment.participation) return null;
+    
+    const { patientJoined, doctorJoined, meetingDuration } = appointment.participation;
+    
+    if (patientJoined && doctorJoined) {
+      return { status: "Both joined", color: "green" };
+    } else if (patientJoined) {
+      return { status: "You joined", color: "blue" };
+    } else if (doctorJoined) {
+      return { status: "Doctor joined", color: "orange" };
+    } else {
+      return { status: "No participants", color: "gray" };
+    }
+  };
+
+  // Separate appointments into upcoming and previous
+  const upcomingAppointments = appointments.filter(appointment => 
+    new Date(appointment.startTime) > new Date()
+  );
+  
+  const previousAppointments = appointments.filter(appointment => 
+    new Date(appointment.startTime) <= new Date()
+  );
+
+  const renderAppointmentCard = (appointment: Appointment, isUpcoming: boolean = true) => {
+    const doctor = doctors[appointment.doctor];
+    const { date, time } = formatDateTime(appointment.date, appointment.startTime);
+    const participationStatus = getParticipationStatus(appointment);
+    
+    return (
+      <Box
+        key={appointment._id}
+        p={4}
+        border="1px solid"
+        borderColor="gray.200"
+        borderRadius="lg"
+        bg="white"
+      >
+        <HStack justify="space-between" align="start">
+          <Box flex={1}>
+            <HStack spacing={2} mb={2}>
+              <Text fontWeight="semibold" fontSize="lg">
+                {doctor ? `Dr. ${doctor.first_name} ${doctor.last_name}` : 'Loading...'}
+              </Text>
+              <Badge colorScheme={isUpcoming ? "green" : "gray"}>
+                {isUpcoming ? "Upcoming" : "Completed"}
+              </Badge>
+              {participationStatus && (
+                <Badge colorScheme={participationStatus.color as any}>
+                  {participationStatus.status}
+                </Badge>
+              )}
+            </HStack>
+            
+            {doctor && (
+              <Text color={Colors.textGray} fontSize="sm" mb={2}>
+                {doctor.specialty}
+              </Text>
+            )}
+            
+            <Text fontSize="sm" color={Colors.textGray}>
+              {date} at {time}
+            </Text>
+            
+            {appointment.notes && (
+              <Text fontSize="sm" color={Colors.textGray} mt={2}>
+                Notes: {appointment.notes}
+              </Text>
+            )}
+
+            {appointment.participation?.meetingDuration && (
+              <Text fontSize="sm" color={Colors.textGray} mt={1}>
+                Duration: {appointment.participation.meetingDuration} minutes
+              </Text>
+            )}
+
+            {appointment.meetingOutcome && appointment.meetingOutcome !== "missed" && (
+              <Text fontSize="sm" color="green.600" mt={1}>
+                Outcome: {appointment.meetingOutcome}
+              </Text>
+            )}
+          </Box>
+          
+          {isUpcoming && (
+            <Button
+              colorScheme="blue"
+              size="sm"
+              onClick={() => joinConsultation(appointment._id)}
+            >
+              Join Consultation
+            </Button>
+          )}
+        </HStack>
+      </Box>
+    );
+  };
+
   if (loading) {
     return (
-      <CardTemplate cardTitle="Upcoming appointments">
+      <CardTemplate cardTitle="Appointments">
         <Box textAlign="center" py={8}>
           <Spinner size="lg" color={Colors.primaryBlue} />
           <Text mt={4} color={Colors.textGray}>Loading appointments...</Text>
@@ -116,7 +284,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
 
   if (!appointments || appointments.length === 0) {
     return (
-      <CardTemplate cardTitle="Upcoming appointments">
+      <CardTemplate cardTitle="Appointments">
         <Image
           src={"/no-appointment-icon.svg"}
           alt="no-appointment-icon"
@@ -130,7 +298,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
             lineHeight={"24px"}
             letterSpacing={"-2%"}
           >
-            No Upcoming appointments
+            No appointments
           </Text>
           <Text
             fontSize={"14px"}
@@ -150,65 +318,71 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
 
   return (
     <>
-      <CardTemplate cardTitle="Upcoming appointments">
-        <VStack spacing={4} align="stretch">
-          {appointments.map((appointment) => {
-            const doctor = doctors[appointment.doctor];
-            const { date, time } = formatDateTime(appointment.date, appointment.startTime);
-            const isUpcoming = new Date(appointment.startTime) > new Date();
-            
-            return (
-              <Box
-                key={appointment._id}
-                p={4}
-                border="1px solid"
-                borderColor="gray.200"
-                borderRadius="lg"
-                bg="white"
+      <VStack spacing={6} align="stretch">
+        {/* Upcoming Appointments Section */}
+        <CardTemplate cardTitle="Upcoming appointments">
+          {upcomingAppointments.length === 0 ? (
+            <Box textAlign="center" py={8}>
+              <Text fontSize="16px" fontWeight={600} color={Colors.textGray}>
+                No upcoming appointments
+              </Text>
+              <Text fontSize="14px" color={Colors.textGray} mt={2}>
+                You don't have any scheduled consultations.
+              </Text>
+            </Box>
+          ) : (
+            <VStack spacing={4} align="stretch">
+              {upcomingAppointments.map((appointment) => 
+                renderAppointmentCard(appointment, true)
+              )}
+            </VStack>
+          )}
+        </CardTemplate>
+
+        {/* Previous Appointments Section */}
+        {previousAppointments.length > 0 && (
+          <Accordion allowToggle>
+            <AccordionItem border="none">
+              <AccordionButton 
+                bg="white" 
+                borderRadius="20px" 
+                border="1px solid #F0F0F0"
+                _hover={{ bg: "gray.50" }}
+                px="16px"
+                py="12px"
               >
-                <HStack justify="space-between" align="start">
-                  <Box flex={1}>
-                    <HStack spacing={2} mb={2}>
-                      <Text fontWeight="semibold" fontSize="lg">
-                        {doctor ? `Dr. ${doctor.first_name} ${doctor.last_name}` : 'Loading...'}
-                      </Text>
-                      <Badge colorScheme={isUpcoming ? "green" : "gray"}>
-                        {isUpcoming ? "Upcoming" : "Past"}
-                      </Badge>
-                    </HStack>
-                    
-                    {doctor && (
-                      <Text color={Colors.textGray} fontSize="sm" mb={2}>
-                        {doctor.specialty}
-                      </Text>
-                    )}
-                    
-                    <Text fontSize="sm" color={Colors.textGray}>
-                      {date} at {time}
-                    </Text>
-                    
-                    {appointment.notes && (
-                      <Text fontSize="sm" color={Colors.textGray} mt={2}>
-                        Notes: {appointment.notes}
-                      </Text>
-                    )}
+                <Box flex="1" textAlign="left">
+                  <Text
+                    fontSize="14px"
+                    lineHeight="20px"
+                    color="#727171"
+                    fontWeight={600}
+                  >
+                    Previous appointments ({previousAppointments.length})
+                  </Text>
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+              <AccordionPanel bg="white" borderRadius="0 0 20px 20px" border="1px solid #F0F0F0" borderTop="none">
+                <Box px="16px" pt="12px" pb="16px">
+                  <Box
+                    bgColor={Colors.cardGray}
+                    borderRadius="12px"
+                    p="32px"
+                  >
+                    <VStack spacing={4} align="stretch">
+                      {previousAppointments.map((appointment) => 
+                        renderAppointmentCard(appointment, false)
+                      )}
+                    </VStack>
                   </Box>
-                  
-                  {isUpcoming && (
-                    <Button
-                      colorScheme="blue"
-                      size="sm"
-                      onClick={() => joinConsultation(appointment._id)}
-                    >
-                      Join Consultation
-                    </Button>
-                  )}
-                </HStack>
-              </Box>
-            );
-          })}
-        </VStack>
-      </CardTemplate>
+                </Box>
+              </AccordionPanel>
+            </AccordionItem>
+          </Accordion>
+        )}
+      </VStack>
+
       {/* Consultation Details Modal */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} size="lg" isCentered>
         <ModalOverlay />

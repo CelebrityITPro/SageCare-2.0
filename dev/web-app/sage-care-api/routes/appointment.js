@@ -2,6 +2,11 @@ const express = require("express");
 const router = express.Router();
 const Appointment = require("../models/Appointment");
 const { sendAppointmentNotifications } = require("../utils/emailService");
+const { 
+  checkMissedConsultations, 
+  getUserParticipationStats, 
+  getAppointmentParticipationReport 
+} = require("../utils/appointmentTracking");
 
 // GET /api/appointments
 router.get("/", async (req, res) => {
@@ -122,6 +127,185 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: "Failed to create appointment" });
+  }
+});
+
+// POST /api/appointments/:id/join - Track when someone joins the meeting
+router.post("/:id/join", async (req, res) => {
+  try {
+    const { participantType, userId } = req.body; // participantType: "patient" or "doctor"
+    
+    if (!participantType || !userId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Missing required fields: participantType, userId" 
+      });
+    }
+
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: "Appointment not found" });
+    }
+
+    const now = new Date();
+    const joinTime = now;
+
+    if (participantType === "patient") {
+      appointment.participation.patientJoined = true;
+      appointment.participation.patientJoinTime = joinTime;
+    } else if (participantType === "doctor") {
+      appointment.participation.doctorJoined = true;
+      appointment.participation.doctorJoinTime = joinTime;
+    }
+
+    appointment.participation.lastActivity = joinTime;
+    await appointment.save();
+
+    console.log(`${participantType} joined appointment ${req.params.id} at ${joinTime}`);
+
+    res.json({ 
+      success: true, 
+      message: `${participantType} joined successfully`,
+      joinTime: joinTime
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to track join" });
+  }
+});
+
+// POST /api/appointments/:id/activity - Track meeting activity
+router.post("/:id/activity", async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: "Appointment not found" });
+    }
+
+    appointment.participation.lastActivity = new Date();
+    await appointment.save();
+
+    res.json({ success: true, message: "Activity tracked" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to track activity" });
+  }
+});
+
+// PUT /api/appointments/:id/outcome - Update meeting outcome
+router.put("/:id/outcome", async (req, res) => {
+  try {
+    const { outcome, meetingNotes, meetingDuration } = req.body;
+    
+    if (!outcome) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Missing required field: outcome" 
+      });
+    }
+
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: "Appointment not found" });
+    }
+
+    appointment.meetingOutcome = outcome;
+    appointment.meetingNotes = meetingNotes || appointment.meetingNotes;
+    
+    if (meetingDuration) {
+      appointment.participation.meetingDuration = meetingDuration;
+    }
+
+    // Update status based on outcome
+    if (outcome === "completed") {
+      appointment.status = "completed";
+    } else if (outcome === "missed") {
+      appointment.status = "missed";
+    }
+
+    await appointment.save();
+
+    console.log(`Appointment ${req.params.id} outcome updated to: ${outcome}`);
+
+    res.json({ 
+      success: true, 
+      message: "Meeting outcome updated successfully",
+      appointment
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to update outcome" });
+  }
+});
+
+// GET /api/appointments/:id/participation - Get participation details
+router.get("/:id/participation", async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: "Appointment not found" });
+    }
+
+    res.json({ 
+      success: true, 
+      participation: appointment.participation,
+      meetingOutcome: appointment.meetingOutcome,
+      meetingNotes: appointment.meetingNotes
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to fetch participation" });
+  }
+});
+
+// GET /api/appointments/stats/:userId - Get participation statistics for a user
+router.get("/stats/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { userType = 'patient' } = req.query;
+    
+    const stats = await getUserParticipationStats(userId, userType);
+    
+    res.json({ 
+      success: true, 
+      stats,
+      userId,
+      userType
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to fetch statistics" });
+  }
+});
+
+// GET /api/appointments/:id/report - Get detailed participation report
+router.get("/:id/report", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const report = await getAppointmentParticipationReport(id);
+    
+    res.json({ 
+      success: true, 
+      report
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to fetch report" });
+  }
+});
+
+// POST /api/appointments/check-missed - Manually trigger missed consultation check
+router.post("/check-missed", async (req, res) => {
+  try {
+    const result = await checkMissedConsultations();
+    
+    res.json({ 
+      success: true, 
+      result
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to check missed consultations" });
   }
 });
 

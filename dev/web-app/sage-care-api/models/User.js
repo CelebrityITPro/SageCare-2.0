@@ -14,6 +14,8 @@ const UserSchema = new mongoose.Schema(
     phone_number: { type: String, required: true },
     is_patient: { type: Boolean, default: false },
     is_doctor: { type: Boolean, default: false },
+    profilePic: { type: Buffer },
+    profilePicType: { type: String },
   },
   { timestamps: true }
 );

@@ -1,6 +1,5 @@
 import { Box, Flex, Image, Text } from "@chakra-ui/react";
 import { useEffect, type ReactNode } from "react";
-import { Colors } from "../components/Colors";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../routes";
 
@@ -14,10 +13,10 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <Flex w="full" h="100vh" align="center" justify="center">
-      <Box w="45%" h="100vh" bg="gray">
+      <Box w={{ base: "0%", md: "45%" }} h="100vh" bg="gray" display={{ base: "none", md: "block" }}>
         <Box
           w="full"
-          bgColor={Colors.primaryBlue}
+          bgColor="brand.500"
           px="32px"
           pt="32px"
           pb="56px"
@@ -43,6 +42,7 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
             mt="16px"
             maxW={"363px"}
             color={"white"}
+            fontFamily="heading"
           >
             Smarter health for every body.
           </Text>
@@ -55,7 +55,7 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
           bgSize={"cover"}
         ></Box>
       </Box>
-      <Box w="55%" bg="white" p="20px" pl="80px">
+      <Box w={{ base: "100%", md: "55%" }} bg="white" p={{ base: "20px", md: "20px" }} pl={{ base: "20px", md: "80px" }}>
         {children}
       </Box>
     </Flex>

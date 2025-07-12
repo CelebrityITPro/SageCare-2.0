@@ -1,5 +1,4 @@
 import { Box, Heading, Text } from "@chakra-ui/react";
-import { Colors } from "../Colors";
 import { ReactNode } from "react";
 
 interface TemplateProps {
@@ -10,35 +9,22 @@ interface TemplateProps {
 const FormTemplate = ({ title, subtitle, form }: TemplateProps) => {
   return (
     <Box maxW={"534px"} w={"full"} mx="auto">
-      <Heading fontSize={"32px"} fontWeight={600} lineHeight={"40px"}>
+      <Heading fontSize={"32px"} fontWeight={700} lineHeight={"40px"} color="gray.800" fontFamily="heading">
         {title}
       </Heading>
       <Text
-        fontSize={"14px"}
+        fontSize={"16px"}
         fontWeight={400}
-        lineHeight={"20px"}
+        lineHeight={"24px"}
         letterSpacing={"-2%"}
         mt={"8px"}
-        color={Colors.textGray}
+        color="gray.500"
+        fontFamily="body"
       >
         {subtitle}
       </Text>
       <Box mt="32px">
         {form}
-        {/* <Input
-          label="Email Address"
-          type="email"
-          placholder="Enter email address"
-        />
-
-        <CustomButton
-          label="Next"
-          variant="primary"
-          size="lg"
-          w="full"
-          mt="32px"
-          color={"white"}
-        /> */}
       </Box>
     </Box>
   );

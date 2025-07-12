@@ -14,11 +14,11 @@ const DashboardLayout = () => {
   }, []);
 
   return (
-    <Flex h="100vh" w="100vw" bg="#F7F7F7">
+    <Flex h="100vh" w="100vw" bg="gray.50">
       <SideNav />
-      <Stack w="full">
+      <Stack w="full" spacing={0}>
         <NavBar />
-        <Box py={"48px"} px="20px">
+        <Box py={{ base: "24px", md: "48px" }} px={{ base: "16px", md: "20px" }}>
           <Box maxW={"964px"} w="full" mx="auto">
             {/* This is where the nested routes will be rendered */}
             <Outlet />

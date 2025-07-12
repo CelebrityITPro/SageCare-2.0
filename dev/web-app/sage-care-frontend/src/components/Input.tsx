@@ -5,9 +5,9 @@ import {
   Input as ChakraInput,
   Box,
   InputProps,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import React, { ChangeEvent } from "react";
-import { Colors } from "./Colors";
 
 interface IInputProps extends InputProps {
   label?: string;
@@ -18,6 +18,7 @@ interface IInputProps extends InputProps {
   id: string;
   name?: string;
   error?: boolean;
+  errorMessage?: string;
 }
 
 const Input = ({
@@ -29,32 +30,45 @@ const Input = ({
   onChange,
   placholder,
   error = false,
+  errorMessage,
   ...props
 }: IInputProps) => {
   return (
     <Box w="full">
-      <Text fontSize={"14px"} lineHeight={"20px"} fontWeight={500}>
+      <Text fontSize={"14px"} lineHeight={"20px"} fontWeight={500} color="gray.700" mb="8px">
         {label}
       </Text>
-      <InputGroup mt="8px">
+      <InputGroup>
         <ChakraInput
           type={type}
           onChange={(e) => onChange(e)}
           value={value}
           placeholder={placholder}
-          bg={"#F7F7F7"}
-          border={error ? "2px solid red" : "none"}
+          bg="gray.50"
+          border={error ? "2px solid" : "1px solid"}
+          borderColor={error ? "red.500" : "gray.200"}
           _focusVisible={{
-            border: `2px solid ${Colors.primaryBlue}`,
-            bgColor: "#ffffff",
+            border: "2px solid",
+            borderColor: "brand.500",
+            bgColor: "white",
+            boxShadow: "0 0 0 1px var(--chakra-colors-brand-500)",
+          }}
+          _hover={{
+            borderColor: error ? "red.500" : "gray.300",
           }}
           borderRadius={"12px"}
           height={"48px"}
           id={id}
           name={name}
+          fontSize="16px"
           {...props}
         />
       </InputGroup>
+      {error && errorMessage && (
+        <FormErrorMessage mt="4px" fontSize="12px">
+          {errorMessage}
+        </FormErrorMessage>
+      )}
     </Box>
   );
 };

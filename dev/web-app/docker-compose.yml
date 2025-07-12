@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  backend:
+    build: ./sage-care-api
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./sage-care-api:/usr/src/app
+    environment:
+      - NODE_ENV=development
+    command: npx nodemon index.js
+
+  frontend:
+    build: ./sage-care-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./sage-care-frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://backend:5000
+    command: npm run dev
+    depends_on:
+      - backend

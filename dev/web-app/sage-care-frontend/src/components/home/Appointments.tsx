@@ -15,14 +15,8 @@ import {
   ModalHeader, 
   ModalBody, 
   ModalFooter, 
-  ModalCloseButton,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon
+  ModalCloseButton
 } from "@chakra-ui/react";
-import { Colors } from "../Colors";
 import { useNavigate } from "react-router-dom";
 
 interface Appointment {
@@ -77,9 +71,6 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
       // Get current user ID from localStorage (assuming it's stored there after login)
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const userId = user._id;
-      
-      console.log("Appointments - User data from localStorage:", user);
-      console.log("Appointments - User ID:", userId);
       
       if (!userId) {
         console.error('No user ID found');
@@ -189,13 +180,9 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
     }
   };
 
-  // Separate appointments into upcoming and previous
+  // Separate appointments into upcoming only (exclude cancelled)
   const upcomingAppointments = appointments.filter(appointment => 
-    new Date(appointment.startTime) > new Date()
-  );
-  
-  const previousAppointments = appointments.filter(appointment => 
-    new Date(appointment.startTime) <= new Date()
+    new Date(appointment.startTime) > new Date() && appointment.status !== "cancelled"
   );
 
   const renderAppointmentCard = (appointment: Appointment, isUpcoming: boolean = true) => {
@@ -229,23 +216,23 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
             </HStack>
             
             {doctor && (
-              <Text color={Colors.textGray} fontSize="sm" mb={2}>
+              <Text color="gray.600" fontSize="sm" mb={2}>
                 {doctor.specialty}
               </Text>
             )}
             
-            <Text fontSize="sm" color={Colors.textGray}>
+            <Text fontSize="sm" color="gray.600">
               {date} at {time}
             </Text>
             
             {appointment.notes && (
-              <Text fontSize="sm" color={Colors.textGray} mt={2}>
+              <Text fontSize="sm" color="gray.600" mt={2}>
                 Notes: {appointment.notes}
               </Text>
             )}
 
             {appointment.participation?.meetingDuration && (
-              <Text fontSize="sm" color={Colors.textGray} mt={1}>
+              <Text fontSize="sm" color="gray.600" mt={1}>
                 Duration: {appointment.participation.meetingDuration} minutes
               </Text>
             )}
@@ -275,8 +262,8 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
     return (
       <CardTemplate cardTitle="Appointments">
         <Box textAlign="center" py={8}>
-          <Spinner size="lg" color={Colors.primaryBlue} />
-          <Text mt={4} color={Colors.textGray}>Loading appointments...</Text>
+          <Spinner size="lg" color="blue.500" />
+          <Text mt={4} color="gray.600">Loading appointments...</Text>
         </Box>
       </CardTemplate>
     );
@@ -305,7 +292,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
             fontWeight={400}
             lineHeight={"20px"}
             letterSpacing={"-2%"}
-            color={Colors.textGray}
+            color="gray.600"
             mt="4px"
           >
             You haven't booked any consultations yet.
@@ -323,10 +310,10 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
         <CardTemplate cardTitle="Upcoming appointments">
           {upcomingAppointments.length === 0 ? (
             <Box textAlign="center" py={8}>
-              <Text fontSize="16px" fontWeight={600} color={Colors.textGray}>
+              <Text fontSize="16px" fontWeight={600} color="gray.600">
                 No upcoming appointments
               </Text>
-              <Text fontSize="14px" color={Colors.textGray} mt={2}>
+              <Text fontSize="14px" color="gray.600" mt={2}>
                 You don't have any scheduled consultations.
               </Text>
             </Box>
@@ -339,48 +326,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
           )}
         </CardTemplate>
 
-        {/* Previous Appointments Section */}
-        {previousAppointments.length > 0 && (
-          <Accordion allowToggle>
-            <AccordionItem border="none">
-              <AccordionButton 
-                bg="white" 
-                borderRadius="20px" 
-                border="1px solid #F0F0F0"
-                _hover={{ bg: "gray.50" }}
-                px="16px"
-                py="12px"
-              >
-                <Box flex="1" textAlign="left">
-                  <Text
-                    fontSize="14px"
-                    lineHeight="20px"
-                    color="#727171"
-                    fontWeight={600}
-                  >
-                    Previous appointments ({previousAppointments.length})
-                  </Text>
-                </Box>
-                <AccordionIcon />
-              </AccordionButton>
-              <AccordionPanel bg="white" borderRadius="0 0 20px 20px" border="1px solid #F0F0F0" borderTop="none">
-                <Box px="16px" pt="12px" pb="16px">
-                  <Box
-                    bgColor={Colors.cardGray}
-                    borderRadius="12px"
-                    p="32px"
-                  >
-                    <VStack spacing={4} align="stretch">
-                      {previousAppointments.map((appointment) => 
-                        renderAppointmentCard(appointment, false)
-                      )}
-                    </VStack>
-                  </Box>
-                </Box>
-              </AccordionPanel>
-            </AccordionItem>
-          </Accordion>
-        )}
+
       </VStack>
 
       {/* Consultation Details Modal */}
@@ -400,10 +346,10 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
                   </Text>
                   <Badge colorScheme="green">Upcoming</Badge>
                 </HStack>
-                <Text color={Colors.textGray} fontSize="sm">
+                <Text color="gray.600" fontSize="sm">
                   {doctors[selectedAppointment.doctor]?.specialty}
                 </Text>
-                <Text fontSize="md" color={Colors.textGray}>
+                <Text fontSize="md" color="gray.600">
                   {new Date(selectedAppointment.date).toLocaleDateString()} at {new Date(selectedAppointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
                 {selectedAppointment.notes && (

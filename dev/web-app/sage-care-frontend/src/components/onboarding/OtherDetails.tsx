@@ -1,54 +1,66 @@
-import { Box, Select, Text } from "@chakra-ui/react";
-import Input from "../Input";
+import { Box, Select, Text, Input, FormControl, FormLabel } from "@chakra-ui/react";
 import React from "react";
-import { Colors } from "../Colors";
 
 const OtherDetails = ({ formik }) => {
   return (
     <>
-      {/* <Input label="Date of birth" type="date" placholder="Date of birth" /> */}
-      <Input
-        label="Age"
-        type="number"
-        placholder="Age"
-        id="age"
-        name="age"
-        value={formik.values.age}
-        onChange={formik.handleChange}
-        error={formik.touched.age && Boolean(formik.errors.age)}
-      />
-      <Input
-        label="Phone number"
-        type="tel"
-        placholder="Phone number"
-        id="phoneNumber"
-        name="phoneNumber"
-        value={formik.values.phoneNumber}
-        onChange={formik.handleChange}
-        error={formik.touched.phoneNumber && Boolean(formik.errors.phoneNumber)}
-      />
-      <Box>
-        <Text fontSize={"14px"} lineHeight={"20px"} fontWeight={500} mb="8px">
+      <FormControl>
+        <FormLabel fontSize="14px" fontWeight={500} color="gray.700">
+          Age
+        </FormLabel>
+        <Input
+          type="number"
+          placeholder="Age"
+          id="age"
+          name="age"
+          value={formik.values.age}
+          onChange={formik.handleChange}
+          isInvalid={formik.touched.age && Boolean(formik.errors.age)}
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel fontSize="14px" fontWeight={500} color="gray.700">
+          Phone number
+        </FormLabel>
+        <Input
+          type="tel"
+          placeholder="Phone number"
+          id="phoneNumber"
+          name="phoneNumber"
+          value={formik.values.phoneNumber}
+          onChange={formik.handleChange}
+          isInvalid={formik.touched.phoneNumber && Boolean(formik.errors.phoneNumber)}
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel fontSize="14px" fontWeight={500} color="gray.700">
           Gender
-        </Text>
+        </FormLabel>
         <Select
           placeholder="Sex assigned at birth"
-          bg={"#F7F7F7"}
-          border={formik.errors.gender ? "2px solid red" : "none"}
+          bg="gray.50"
+          border={formik.errors.gender ? "2px solid" : "1px solid"}
+          borderColor={formik.errors.gender ? "red.500" : "gray.200"}
           _focusVisible={{
-            border: `2px solid ${Colors.primaryBlue}`,
-            bgColor: "#ffffff",
+            border: "2px solid",
+            borderColor: "brand.500",
+            bgColor: "white",
+            boxShadow: "0 0 0 1px var(--chakra-colors-brand-500)",
+          }}
+          _hover={{
+            borderColor: formik.errors.gender ? "red.500" : "gray.300",
           }}
           borderRadius={"12px"}
           height={"48px"}
           id="gender"
           name="gender"
           onChange={formik.handleChange}
+          fontSize="16px"
         >
           <option value="Male">Male</option>
           <option value="Female">Female</option>
         </Select>
-      </Box>
+      </FormControl>
     </>
   );
 };

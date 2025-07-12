@@ -40,6 +40,18 @@ const AppointmentSchema = mongoose.Schema(
       type: String,
       required: false,
     },
+    // Third party fields
+    thirdParty: {
+      email: {
+        type: String,
+      },
+      firstName: {
+        type: String,
+      },
+      lastName: {
+        type: String,
+      },
+    },
     // Participation tracking fields
     participation: {
       patientJoined: {

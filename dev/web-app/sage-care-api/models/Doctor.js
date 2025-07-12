@@ -7,6 +7,12 @@ const DoctorSchema = new mongoose.Schema(
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     specialty: { type: String, required: true },
+    experience: { type: String },
+    education: [{ type: String }],
+    qualifications: [{ type: String }],
+    certifications: [{ type: String }],
+    languages: [{ type: String }],
+    location: { type: String },
   },
   { timestamps: true }
 );

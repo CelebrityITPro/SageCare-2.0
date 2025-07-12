@@ -1,7 +1,6 @@
-import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { Box, Heading, Stack, Text, Link, useToast, Progress } from "@chakra-ui/react";
 import AuthLayout from "../layouts/AuthLayout";
 import GetStarted from "../components/onboarding/GetStarted";
-import { Colors } from "../components/Colors";
 import CreatePassword from "../components/onboarding/CreatePassword";
 import CustomButton from "../components/CustomButton";
 import OtherDetails from "../components/onboarding/OtherDetails";
@@ -10,12 +9,12 @@ import { FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import { useSignUp } from "../api/auth";
 import { useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
 const Signup = () => {
   const [page, setPage] = useState(1);
-
+  const toast = useToast();
   const { mutate: signUpUser } = useSignUp();
-
   const navigate = useNavigate();
 
   const formik = useFormik({
@@ -83,24 +82,26 @@ const Signup = () => {
   return (
     <AuthLayout>
       <Box>
-        <Box maxW={"534px"} w={"full"}>
-          <Heading fontSize={"32px"} fontWeight={600} lineHeight={"40px"}>
+        <Box maxW={"534px"} w={"full"} bg="white" borderRadius="xl" boxShadow="lg" px={{ base: "20px", md: "40px" }} py={{ base: "32px", md: "48px" }}>
+          <Heading fontSize={{ base: "28px", md: "32px" }} fontWeight={700} lineHeight={"40px"} color="brand.500" mb="8px" fontFamily="heading">
             Let’s get you started
           </Heading>
           <Text
-            fontSize={"14px"}
+            fontSize={{ base: "15px", md: "16px" }}
             fontWeight={400}
-            lineHeight={"20px"}
+            lineHeight={"24px"}
             letterSpacing={"-2%"}
-            mt={"8px"}
-            color={Colors.textGray}
+            mt={"4px"}
+            color="gray.500"
             mb="32px"
+            fontFamily="body"
           >
             {`We’ll create an account if you don’t have one yet.`}
           </Text>
+          <Progress value={page === 1 ? 50 : 100} size="sm" colorScheme="brand" borderRadius="full" mb="24px" />
           <FormikProvider value={formik}>
             <form>
-              <Stack spacing={"16px"}>
+              <Stack spacing={"20px"}>
                 {page === 1 && (
                   <>
                     <GetStarted formik={formik} />
@@ -109,7 +110,6 @@ const Signup = () => {
                 )}
                 {page === 2 && <OtherDetails formik={formik} />}
               </Stack>
-
               <CustomButton
                 label={page === 2 ? "Continue" : "Next"}
                 variant="primary"
@@ -122,6 +122,19 @@ const Signup = () => {
               />
             </form>
           </FormikProvider>
+          <Link
+            as={RouterLink}
+            to="/login"
+            color="brand.500"
+            display="block"
+            textAlign="center"
+            mt="24px"
+            fontWeight={500}
+            fontSize="15px"
+            _hover={{ textDecoration: "underline" }}
+          >
+            Already registered? Login
+          </Link>
         </Box>
       </Box>
     </AuthLayout>

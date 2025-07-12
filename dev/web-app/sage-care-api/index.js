@@ -6,6 +6,7 @@ const userRoute = require("./routes/user");
 const authRoute = require("./routes/auth");
 const doctorRoute = require("./routes/doctor");
 const appointmentRoute = require("./routes/appointment");
+const nutritionRoute = require("./routes/nutrition");
 
 dotenv.config();
 
@@ -51,6 +52,8 @@ app.use("/api/users", userRoute);
 app.use("/api/users", userRoute);
 app.use("/api/doctors", doctorRoute);
 app.use("/api/appointments", appointmentRoute);
+app.use("/api/nutrition", nutritionRoute);
+app.use("/uploads", express.static("uploads"));
 // app.use("/api/cart", cartRoute);
 
 const port = process.env.PORT;

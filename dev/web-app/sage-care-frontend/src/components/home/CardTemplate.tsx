@@ -1,5 +1,4 @@
 import { Box, Center, Flex, Text } from "@chakra-ui/react";
-import { Colors } from "../Colors";
 import React, { ReactNode } from "react";
 
 interface QuickActionTemplateProps {
@@ -16,22 +15,38 @@ export const QuickActionTemplate = ({
   return (
     <Flex
       alignItems={"center"}
-      borderRadius={"12px"}
+      borderRadius={"16px"}
       bg="white"
-      p="16px"
+      p="20px"
       gap="16px"
       cursor={"pointer"}
-      _hover={{ bg: "#F0F0F0", transform: "translateY(-2px)" }}
-      transition={"all .3s linear"}
+      border="1px solid"
+      borderColor="gray.200"
+      _hover={{ 
+        bg: "gray.50", 
+        transform: "translateY(-2px)",
+        boxShadow: "lg",
+        borderColor: "brand.200"
+      }}
+      transition={"all 0.2s ease"}
       onClick={action}
     >
-      <Center boxSize={"48px"} borderRadius={"8px"} bg="purple.100"></Center>
-      <Box>
+      <Center 
+        boxSize={"48px"} 
+        borderRadius={"12px"} 
+        bg="brand.100"
+        color="brand.500"
+      >
+        <Box w="6" h="6" bg="currentColor" borderRadius="full" />
+      </Center>
+      <Box flex="1">
         <Text
-          fontSize={"14px"}
+          fontSize={"16px"}
           fontWeight={600}
-          lineHeight={"20px"}
+          lineHeight={"24px"}
           letterSpacing={"-2%"}
+          color="gray.800"
+          fontFamily="heading"
         >
           {title}
         </Text>
@@ -40,7 +55,9 @@ export const QuickActionTemplate = ({
           fontWeight={400}
           lineHeight={"20px"}
           letterSpacing={"-2%"}
-          color={Colors.textGray}
+          color="gray.500"
+          mt="4px"
+          fontFamily="body"
         >
           {subtitle}
         </Text>
@@ -59,33 +76,41 @@ const CardTemplate = ({ cardTitle, children }: CardTemplateProps) => {
     <Flex
       flexDirection={"column"}
       bg={"white"}
-      border={"1px solid #F0F0F0"}
+      border={"1px solid"}
+      borderColor="gray.200"
       borderRadius={"20px"}
       w="full"
       h="full"
+      boxShadow="sm"
+      overflow="hidden"
     >
       <Box
-        px="16px"
-        pt="16px"
-        pb="12px"
-        borderBottom={`1px solid ${Colors.cardGray}`}
+        px="20px"
+        pt="20px"
+        pb="16px"
+        borderBottom="1px solid"
+        borderColor="gray.100"
+        bg="gray.50"
       >
         <Text
-          fontSize={"14px"}
-          lineHeight={"20px"}
-          color={"#727171"}
+          fontSize={"16px"}
+          lineHeight={"24px"}
+          color={"gray.700"}
           fontWeight={600}
+          fontFamily="heading"
         >
           {cardTitle}
         </Text>
       </Box>
-      <Flex px="16px" pt="12px" pb="16px" flex={"1"}>
+      <Flex px="20px" pt="16px" pb="20px" flex={"1"}>
         <Center
-          bgColor={Colors.cardGray}
+          bgColor="gray.50"
           flexDirection={"column"}
-          borderRadius={"12px"}
+          borderRadius={"16px"}
           w="full"
           p="32px"
+          border="1px solid"
+          borderColor="gray.100"
         >
           {children}
         </Center>

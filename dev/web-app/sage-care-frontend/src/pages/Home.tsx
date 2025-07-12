@@ -7,7 +7,6 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { Colors } from "../components/Colors";
 import React from "react";
 import Appointments from "../components/home/Appointments";
 import NutritionSummary from "../components/home/NutritionSummary";
@@ -19,7 +18,6 @@ const Home = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const { data, isLoading } = useGetUserDetails();
-  console.log(data);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -31,42 +29,45 @@ const Home = () => {
   return (
     <Box w="full">
       {isLoading ? (
-        <Flex w="full" h="80vh">
-          <Spinner />
+        <Flex w="full" h="80vh" justify="center" align="center">
+          <Spinner size="xl" color="brand.500" />
         </Flex>
       ) : (
         <>
-          <Heading fontSize={"24px"} lineHeight={"32px"} fontWeight={600}>
+          <Heading fontSize={{ base: "20px", md: "24px" }} lineHeight={"32px"} fontWeight={700} color="gray.800" fontFamily="heading">
             Welcome, {data?.fullname}
           </Heading>
           <Text
-            fontSize={"14px"}
+            fontSize={{ base: "14px", md: "16px" }}
             fontWeight={400}
-            lineHeight={"20px"}
+            lineHeight={"24px"}
             letterSpacing={"-2%"}
-            color={Colors.textGray}
+            color="gray.500"
             mt="4px"
+            fontFamily="body"
           >
-            Let’s take care of your health today.
+            Let's take care of your health today.
           </Text>
-          <Flex mt="24px" gap="12px">
-            <Box flex="2">
+          <Flex mt="24px" gap="12px" direction={{ base: "column", lg: "row" }}>
+            <Box flex={{ base: "1", lg: "2" }}>
               <Appointments refreshKey={refreshKey} />
             </Box>
-            <Box flex="1">
+            <Box flex={{ base: "1", lg: "1" }}>
               <NutritionSummary />
             </Box>
           </Flex>
 
           <Text
-            fontSize={"14px"}
-            fontWeight={500}
-            lineHeight={"20px"}
-            mt="24px"
+            fontSize={{ base: "16px", md: "18px" }}
+            fontWeight={600}
+            lineHeight={"24px"}
+            mt="32px"
+            color="gray.800"
+            fontFamily="heading"
           >
             Quick actions
           </Text>
-          <Flex mt="12px" gap="12px">
+          <Flex mt="16px" gap="12px" direction={{ base: "column", md: "row" }}>
             <Box flex="1">
               <QuickActionTemplate
                 title="Book appointments"

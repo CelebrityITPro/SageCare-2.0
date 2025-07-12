@@ -58,11 +58,12 @@ router.post("/", async (req, res) => {
   }
   try {
     console.log("Appointment creation - Request body:", req.body);
+    console.log("Appointment creation - Headers:", req.headers);
     
-    const { doctor, patient, startTime, endTime, notes, thirdParty, timezone } = req.body;
+    const { doctor, patient, startTime, endTime, notes, thirdParty, thirdPartyFirstName, thirdPartyLastName, timezone } = req.body;
 
     console.log("Appointment creation - Extracted data:", {
-      doctor, patient, startTime, endTime, notes
+      doctor, patient, startTime, endTime, notes, thirdParty, thirdPartyFirstName, thirdPartyLastName
     });
 
     // Validate required fields
@@ -83,6 +84,14 @@ router.post("/", async (req, res) => {
     // Create appointment with UTC times
     const date = new Date(startTime);
     date.setUTCHours(0, 0, 0, 0); // Set to midnight UTC for the date only
+    
+    // Prepare third party data
+    const thirdPartyData = thirdParty ? {
+      email: thirdParty,
+      firstName: thirdPartyFirstName || '',
+      lastName: thirdPartyLastName || ''
+    } : null;
+
     const appointment = new Appointment({
       doctor,
       patient,
@@ -91,6 +100,7 @@ router.post("/", async (req, res) => {
       endTime,
       notes,
       jitsiLink,
+      thirdParty: thirdPartyData,
       timezone,
     });
 
@@ -104,7 +114,7 @@ router.post("/", async (req, res) => {
       const notificationResults = await sendAppointmentNotifications({
         doctor,
         patient,
-        thirdParty: thirdParty || null,
+        thirdParty: appointment.thirdParty,
         jitsiLink,
         date: appointment.date,
         startTime: appointment.startTime,
@@ -125,8 +135,13 @@ router.post("/", async (req, res) => {
       message: "Appointment created successfully. Email notifications sent."
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: "Failed to create appointment" });
+    console.error("Appointment creation - Error details:", err);
+    console.error("Appointment creation - Error stack:", err.stack);
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to create appointment",
+      details: err.message 
+    });
   }
 });
 
@@ -306,6 +321,141 @@ router.post("/check-missed", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: "Failed to check missed consultations" });
+  }
+});
+
+// PATCH /api/appointments/:id - Update appointment details
+router.patch("/:id", async (req, res) => {
+  try {
+    const { date, startTime, endTime, notes, thirdParty, thirdPartyFirstName, thirdPartyLastName, timezone } = req.body;
+    
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: "Appointment not found" });
+    }
+
+    // Store old third party data for comparison - create a deep copy
+    const oldThirdParty = appointment.thirdParty ? {
+      email: appointment.thirdParty.email,
+      firstName: appointment.thirdParty.firstName,
+      lastName: appointment.thirdParty.lastName
+    } : null;
+    
+    console.log('PATCH appointment debugging:', {
+      appointmentId: req.params.id,
+      oldThirdParty,
+      newThirdParty: thirdParty,
+      newThirdPartyFirstName: thirdPartyFirstName,
+      newThirdPartyLastName: thirdPartyLastName
+    });
+    
+    // Update appointment fields
+    if (date) appointment.date = new Date(date);
+    if (startTime) appointment.startTime = new Date(startTime);
+    if (endTime) appointment.endTime = new Date(endTime);
+    if (notes !== undefined) appointment.notes = notes;
+    if (timezone) appointment.timezone = timezone;
+    
+    // Update third party data
+    if (thirdParty !== undefined) {
+      if (thirdParty) {
+        appointment.thirdParty = {
+          email: thirdParty,
+          firstName: thirdPartyFirstName || '',
+          lastName: thirdPartyLastName || ''
+        };
+      } else {
+        appointment.thirdParty = null;
+      }
+    }
+
+    await appointment.save();
+
+    console.log('Updated appointment third party:', appointment.thirdParty);
+
+    // Send email notifications for appointment update
+    try {
+      const notificationResults = await sendAppointmentNotifications({
+        doctor: appointment.doctor,
+        patient: appointment.patient,
+        thirdParty: appointment.thirdParty,
+        jitsiLink: appointment.jitsiLink,
+        date: appointment.date,
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+        notes: appointment.notes,
+        timezone: appointment.timezone,
+        isUpdate: true,
+        oldThirdParty: oldThirdParty
+      });
+      
+      console.log('Appointment update email notifications sent:', notificationResults);
+    } catch (emailError) {
+      console.error('Failed to send appointment update email notifications:', emailError);
+      // Don't fail the appointment update if emails fail
+    }
+
+    res.json({ 
+      success: true, 
+      appointment,
+      message: "Appointment updated successfully. All participants have been notified."
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to update appointment" });
+  }
+});
+
+// POST /api/appointments/:id/cancel - Cancel appointment
+router.post("/:id/cancel", async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: "Appointment not found" });
+    }
+
+    // Check if appointment is already cancelled
+    if (appointment.status === "cancelled") {
+      return res.status(400).json({ success: false, error: "Appointment is already cancelled" });
+    }
+
+    // Store appointment details before cancellation for email notifications
+    const appointmentDetails = {
+      doctor: appointment.doctor,
+      patient: appointment.patient,
+      thirdParty: appointment.thirdParty,
+      date: appointment.date,
+      startTime: appointment.startTime,
+      endTime: appointment.endTime,
+      notes: appointment.notes,
+      timezone: appointment.timezone
+    };
+
+    // Update appointment status to cancelled
+    appointment.status = "cancelled";
+    await appointment.save();
+
+    // Send cancellation email notifications
+    try {
+      const notificationResults = await sendAppointmentNotifications({
+        ...appointmentDetails,
+        isCancellation: true
+      });
+      
+      console.log('Appointment cancellation email notifications sent:', notificationResults);
+    } catch (emailError) {
+      console.error('Failed to send appointment cancellation email notifications:', emailError);
+      // Don't fail the cancellation if emails fail
+    }
+
+    res.json({ 
+      success: true, 
+      appointment,
+      message: "Appointment cancelled successfully. All participants have been notified."
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Failed to cancel appointment" });
   }
 });
 

@@ -1,6 +1,5 @@
-import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { Box, Heading, Stack, Text, useToast, Link } from "@chakra-ui/react";
 import AuthLayout from "../layouts/AuthLayout";
-import { Colors } from "../components/Colors";
 import CustomButton from "../components/CustomButton";
 import { FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
@@ -9,9 +8,9 @@ import { useNavigate } from "react-router-dom";
 import Input from "../components/Input";
 
 const Login = () => {
-  const { mutate: loginUser } = useLoginUser();
-
+  const { mutate: loginUser, isPending } = useLoginUser();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const formik = useFormik({
     initialValues: {
@@ -25,29 +24,34 @@ const Login = () => {
         .required("Password is required"),
     }),
     onSubmit: (values) => {
-      // Handle final submission here
-      console.log("Final submission values:", values);
       const data = {
         email: values.email,
         password: values.password,
       };
-      console.log("Attempting login with data:", data);
       loginUser(
         { data },
         {
-                  onSuccess: (res) => {
-          console.log("Login successful:", res);
-          localStorage.setItem("token", res?.accessToken);
-          localStorage.setItem("userId", res?._id);
-          // Store the full user object (excluding password and accessToken)
-          const { password, accessToken, ...userData } = res;
-          localStorage.setItem("user", JSON.stringify(userData));
-          console.log("Stored user data:", userData);
-          navigate("/");
-        },
+          onSuccess: (res) => {
+            localStorage.setItem("token", res?.accessToken);
+            localStorage.setItem("userId", res?._id);
+            const { password, accessToken, ...userData } = res;
+            localStorage.setItem("user", JSON.stringify(userData));
+            toast({
+              title: "Login successful",
+              status: "success",
+              duration: 3000,
+              isClosable: true,
+            });
+            navigate("/");
+          },
           onError: (error) => {
-            console.error("Login failed:", error);
-            alert("Login failed: " + (error?.message || "Unknown error"));
+            toast({
+              title: "Login failed",
+              description: error?.message || "Please check your credentials",
+              status: "error",
+              duration: 5000,
+              isClosable: true,
+            });
           }
         }
       );
@@ -57,24 +61,25 @@ const Login = () => {
   return (
     <AuthLayout>
       <Box>
-        <Box maxW={"534px"} w={"full"}>
-          <Heading fontSize={"32px"} fontWeight={600} lineHeight={"40px"}>
+        <Box maxW={"534px"} w={"full"} bg="white" borderRadius="xl" boxShadow="lg" px={{ base: "20px", md: "40px" }} py={{ base: "32px", md: "48px" }}>
+          <Heading fontSize={{ base: "28px", md: "32px" }} fontWeight={700} lineHeight={"40px"} color="brand.500" mb="8px" fontFamily="heading">
             Welcome back
           </Heading>
           <Text
-            fontSize={"14px"}
+            fontSize={{ base: "15px", md: "16px" }}
             fontWeight={400}
-            lineHeight={"20px"}
+            lineHeight={"24px"}
             letterSpacing={"-2%"}
-            mt={"8px"}
-            color={Colors.textGray}
+            mt={"4px"}
+            color="gray.500"
             mb="32px"
+            fontFamily="body"
           >
-            {`Login to your account`}
+            Login to your account
           </Text>
           <FormikProvider value={formik}>
             <form>
-              <Stack spacing={"16px"}>
+              <Stack spacing={"20px"}>
                 <Input
                   label="Email Address"
                   type="email"
@@ -86,7 +91,7 @@ const Login = () => {
                   error={formik.touched.email && Boolean(formik.errors.email)}
                 />
                 <Input
-                  label="Create password"
+                  label="Password"
                   type="password"
                   id="password"
                   name="password"
@@ -95,7 +100,7 @@ const Login = () => {
                   error={
                     formik.touched.password && Boolean(formik.errors.password)
                   }
-                  placeholder="Create a password"
+                  placeholder="Enter your password"
                 />
               </Stack>
 
@@ -107,8 +112,24 @@ const Login = () => {
                 mt="32px"
                 color={"white"}
                 onClick={() => formik.submitForm()}
-                // isLoading={isLoading}
+                isLoading={isPending}
               />
+              
+              <Box textAlign="center" mt="24px">
+                <Text fontSize="14px" color="gray.500" fontFamily="body">
+                  Don't have an account?{" "}
+                  <Link
+                    color="brand.500"
+                    fontWeight={600}
+                    textDecoration="none"
+                    _hover={{ textDecoration: "underline" }}
+                    onClick={() => navigate("/signup")}
+                    cursor="pointer"
+                  >
+                    Sign up
+                  </Link>
+                </Text>
+              </Box>
             </form>
           </FormikProvider>
         </Box>

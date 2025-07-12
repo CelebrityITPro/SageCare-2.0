@@ -2,8 +2,14 @@ const express = require("express");
 const router = express.Router();
 const CryptoJS = require("crypto-js");
 const { verifyAdmin, verifyAuth } = require("./verifyToken");
+const multer = require("multer");
+const path = require("path");
 
 const User = require("../models/User");
+
+// Multer setup for profile picture uploads (memory storage)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // Public endpoint for video consultation (no auth required)
 router.get("/public/:id", async (req, res) => {
@@ -45,6 +51,45 @@ router.get("/:id", verifyAuth, async (req, res) => {
   } catch (error) {
     console.error("User route error:", error);
     return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// PATCH endpoint for updating user profile (including profilePic as Buffer)
+router.patch("/:id", verifyAuth, upload.single("profilePic"), async (req, res) => {
+  try {
+    const update = { ...req.body };
+    if (req.file) {
+      update.profilePic = req.file.buffer;
+      update.profilePicType = req.file.mimetype;
+    }
+    // Remove fields that should not be updated directly
+    delete update.password;
+    delete update.email;
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: update },
+      { new: true }
+    );
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+    const { password, ...rest } = updatedUser._doc;
+    res.status(200).json(rest);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET endpoint to serve profile picture
+router.get("/:id/profile-pic", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (user && user.profilePic && user.profilePicType) {
+      res.set("Content-Type", user.profilePicType);
+      return res.send(user.profilePic);
+    }
+    res.status(404).send();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

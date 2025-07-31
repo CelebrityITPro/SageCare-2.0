@@ -1,0 +1,137 @@
+{
+  "pizza": {
+    "calories": 285,
+    "protein": 12.5,
+    "carbs": 36.2,
+    "fat": 10.1,
+    "fiber": 2.1,
+    "sugar": 3.2,
+    "sodium": 640
+  },
+  "hamburger": {
+    "calories": 295,
+    "protein": 17.2,
+    "carbs": 30.1,
+    "fat": 12.8,
+    "fiber": 1.5,
+    "sugar": 4.2,
+    "sodium": 580
+  },
+  "sushi": {
+    "calories": 150,
+    "protein": 6.5,
+    "carbs": 25.8,
+    "fat": 2.1,
+    "fiber": 0.8,
+    "sugar": 0.5,
+    "sodium": 320
+  },
+  "steak": {
+    "calories": 271,
+    "protein": 26.0,
+    "carbs": 0.0,
+    "fat": 18.0,
+    "fiber": 0.0,
+    "sugar": 0.0,
+    "sodium": 72
+  },
+  "chicken_curry": {
+    "calories": 180,
+    "protein": 15.2,
+    "carbs": 8.5,
+    "fat": 10.8,
+    "fiber": 2.1,
+    "sugar": 3.2,
+    "sodium": 450
+  },
+  "pasta_carbonara": {
+    "calories": 320,
+    "protein": 12.5,
+    "carbs": 45.2,
+    "fat": 12.8,
+    "fiber": 2.5,
+    "sugar": 2.1,
+    "sodium": 680
+  },
+  "salad_caesar": {
+    "calories": 120,
+    "protein": 8.5,
+    "carbs": 6.2,
+    "fat": 8.1,
+    "fiber": 2.8,
+    "sugar": 1.5,
+    "sodium": 420
+  },
+  "ice_cream": {
+    "calories": 207,
+    "protein": 3.5,
+    "carbs": 24.0,
+    "fat": 11.0,
+    "fiber": 0.0,
+    "sugar": 21.0,
+    "sodium": 80
+  },
+  "apple_pie": {
+    "calories": 237,
+    "protein": 2.4,
+    "carbs": 34.0,
+    "fat": 11.0,
+    "fiber": 1.8,
+    "sugar": 18.0,
+    "sodium": 266
+  },
+  "chocolate_cake": {
+    "calories": 371,
+    "protein": 5.4,
+    "carbs": 50.0,
+    "fat": 18.0,
+    "fiber": 1.5,
+    "sugar": 30.0,
+    "sodium": 300
+  },
+  "french_fries": {
+    "calories": 365,
+    "protein": 3.4,
+    "carbs": 63.0,
+    "fat": 14.0,
+    "fiber": 4.4,
+    "sugar": 0.3,
+    "sodium": 246
+  },
+  "fish_and_chips": {
+    "calories": 290,
+    "protein": 12.0,
+    "carbs": 35.0,
+    "fat": 12.0,
+    "fiber": 2.0,
+    "sugar": 1.0,
+    "sodium": 450
+  },
+  "tacos": {
+    "calories": 226,
+    "protein": 12.0,
+    "carbs": 20.0,
+    "fat": 12.0,
+    "fiber": 3.0,
+    "sugar": 2.0,
+    "sodium": 400
+  },
+  "ramen": {
+    "calories": 188,
+    "protein": 7.0,
+    "carbs": 27.0,
+    "fat": 7.0,
+    "fiber": 1.0,
+    "sugar": 1.0,
+    "sodium": 891
+  },
+  "pad_thai": {
+    "calories": 357,
+    "protein": 14.0,
+    "carbs": 45.0,
+    "fat": 16.0,
+    "fiber": 2.0,
+    "sugar": 8.0,
+    "sodium": 600
+  }
+}

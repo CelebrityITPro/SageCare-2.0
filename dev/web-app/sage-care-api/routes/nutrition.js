@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const fetch = require("node-fetch");
+const FormData = require("form-data");
 const NutritionEntry = require("../models/NutritionEntry");
+const Recommendation = require("../models/Recommendation");
+const UserNutritionProfile = require("../models/UserNutritionProfile");
 
 // Configure multer for memory storage (no file system)
 const upload = multer({
@@ -164,10 +168,26 @@ router.post("/analyze", upload.single("image"), async (req, res) => {
     const mealType = req.body.mealType || "lunch";
     const notes = req.body.notes || "";
 
-    // Analyze the food image
-    const analysis = await analyzeFoodImage(req.file.buffer);
+    // Call the Food Inference API
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, req.file.originalname);
+    
+    const foodInferenceResponse = await fetch('http://food-inference-api:5001/analyze-food-image', {
+      method: 'POST',
+      body: formData
+    });
 
-    // Create nutrition entry in database
+    if (!foodInferenceResponse.ok) {
+      throw new Error('Food inference API failed');
+    }
+
+    const foodAnalysis = await foodInferenceResponse.json();
+    
+    if (!foodAnalysis.success) {
+      throw new Error(foodAnalysis.error || 'Food analysis failed');
+    }
+
+    // Create nutrition entry in database with enhanced metadata
     const nutritionEntry = new NutritionEntry({
       userId,
       mealType,
@@ -176,19 +196,43 @@ router.post("/analyze", upload.single("image"), async (req, res) => {
         contentType: req.file.mimetype,
         filename: req.file.originalname
       },
-      nutrition: analysis.nutrition,
-      foodItems: analysis.foodItems,
-      confidence: analysis.confidence,
-      recommendations: analysis.recommendations,
+      nutrition: foodAnalysis.nutrition,
+      foodItems: [foodAnalysis.food_label],
+      confidence: foodAnalysis.confidence,
+      recommendations: foodAnalysis.tips || [],
       notes,
-      individualFoods: analysis.individualFoods
+      analysisMetadata: {
+        modelVersion: "food-101-v1",
+        processingTime: Date.now(), // You could track actual processing time
+        foodLabel: foodAnalysis.food_label
+      },
+      tags: [foodAnalysis.food_label, mealType]
     });
 
     await nutritionEntry.save();
 
+    // Create recommendations from the analysis
+    if (foodAnalysis.tips && foodAnalysis.tips.length > 0) {
+      const recommendations = foodAnalysis.tips.map((tip, index) => ({
+        userId,
+        sourceEntryId: nutritionEntry._id,
+        category: index === 0 ? "health_tip" : "dietary_advice",
+        content: tip,
+        priority: index === 0 ? 4 : 3,
+        tags: [foodAnalysis.food_label, mealType]
+      }));
+
+      await Recommendation.insertMany(recommendations);
+    }
+
     res.json({
       success: true,
-      analysis,
+      analysis: {
+        foodItems: [foodAnalysis.food_label],
+        nutrition: foodAnalysis.nutrition,
+        confidence: foodAnalysis.confidence,
+        recommendations: foodAnalysis.tips || []
+      },
       entryId: nutritionEntry._id,
       message: "Food analyzed and saved successfully"
     });
@@ -336,100 +380,124 @@ router.delete("/entry/:entryId", async (req, res) => {
   }
 });
 
-// Get diet recommendations
+// Get all recommendations for a user
 router.get("/recommendations/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
+    const { category, isFollowed, isIgnored, limit = 100 } = req.query;
     
-    // Get user's recent nutrition data
-    const recentEntries = await NutritionEntry.find({ userId })
-      .sort({ date: -1 })
-      .limit(10)
-      .select('nutrition mealType');
+    let query = { userId };
     
-    // Calculate average nutrition
-    const avgNutrition = recentEntries.reduce((acc, entry) => ({
-      calories: acc.calories + entry.nutrition.calories,
-      protein: acc.protein + entry.nutrition.protein,
-      carbs: acc.carbs + entry.nutrition.carbs,
-      fat: acc.fat + entry.nutrition.fat,
-      fiber: acc.fiber + entry.nutrition.fiber,
-      sugar: acc.sugar + entry.nutrition.sugar,
-      sodium: acc.sodium + entry.nutrition.sodium,
-    }), {
-      calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0
-    });
+    if (category) query.category = category;
+    if (isFollowed !== undefined) query.isFollowed = isFollowed === 'true';
+    if (isIgnored !== undefined) query.isIgnored = isIgnored === 'true';
     
-    // Calculate averages
-    const count = recentEntries.length || 1;
-    Object.keys(avgNutrition).forEach(key => {
-      avgNutrition[key] = avgNutrition[key] / count;
-    });
-    
-    // Generate personalized recommendations
-    const recommendations = [];
-    
-    if (avgNutrition.calories < 1500) {
-      recommendations.push({
-        type: "nutrition",
-        title: "Increase Calorie Intake",
-        description: "Your average daily calorie intake is low. Consider adding more nutrient-dense foods.",
-        priority: "high"
-      });
-    } else if (avgNutrition.calories > 2500) {
-      recommendations.push({
-        type: "nutrition",
-        title: "Consider Portion Control",
-        description: "Your calorie intake is high. Focus on portion control and balanced meals.",
-        priority: "medium"
-      });
-    }
-    
-    if (avgNutrition.protein < 50) {
-      recommendations.push({
-        type: "nutrition",
-        title: "Increase Protein Intake",
-        description: "Add more protein-rich foods like lean meats, fish, eggs, or legumes.",
-        priority: "high"
-      });
-    }
-    
-    if (avgNutrition.fiber < 25) {
-      recommendations.push({
-        type: "nutrition",
-        title: "Add More Fiber",
-        description: "Include more fiber-rich foods like whole grains, fruits, and vegetables.",
-        priority: "medium"
-      });
-    }
-    
-    if (avgNutrition.sugar > 50) {
-      recommendations.push({
-        type: "nutrition",
-        title: "Reduce Sugar Intake",
-        description: "Consider reducing processed foods and added sugars.",
-        priority: "medium"
-      });
-    }
-    
-    if (recommendations.length === 0) {
-      recommendations.push({
-        type: "lifestyle",
-        title: "Great Job!",
-        description: "Your nutrition is well-balanced. Keep up the good work!",
-        priority: "low"
-      });
-    }
+    const recommendations = await Recommendation.find(query)
+      .sort({ priority: -1, createdAt: -1 })
+      .limit(parseInt(limit))
+      .populate('sourceEntryId', 'foodItems date mealType');
     
     res.json({
       success: true,
-      recommendations,
-      avgNutrition
+      recommendations
     });
   } catch (error) {
     console.error("Get recommendations error:", error);
     res.status(500).json({ 
       error: "Failed to get recommendations",
+      details: error.message 
+    });
+  }
+});
+
+// Save user feedback for nutrition entry
+router.post("/entry/:entryId/feedback", async (req, res) => {
+  try {
+    const { entryId } = req.params;
+    const { accuracyRating, helpfulRecommendations, ignoredRecommendations } = req.body;
+    
+    const updateData = {
+      'userFeedback.accuracyRating': accuracyRating,
+      'userFeedback.helpfulRecommendations': helpfulRecommendations,
+      'userFeedback.ignoredRecommendations': ignoredRecommendations
+    };
+    
+    const entry = await NutritionEntry.findByIdAndUpdate(
+      entryId,
+      updateData,
+      { new: true }
+    );
+    
+    if (!entry) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "Nutrition entry not found" 
+      });
+    }
+    
+    res.json({
+      success: true,
+      entry
+    });
+  } catch (error) {
+    console.error("Save feedback error:", error);
+    res.status(500).json({ 
+      error: "Failed to save feedback",
+      details: error.message 
+    });
+  }
+});
+
+// Get nutrition analytics for a user
+router.get("/analytics/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { startDate, endDate } = req.query;
+    
+    let dateQuery = {};
+    if (startDate && endDate) {
+      dateQuery = {
+        date: {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        }
+      };
+    }
+    
+    const query = { userId, ...dateQuery };
+    
+    const entries = await NutritionEntry.find(query);
+    
+    // Calculate analytics
+    const totalEntries = entries.length;
+    const totalCalories = entries.reduce((sum, entry) => sum + entry.nutrition.calories, 0);
+    const avgCalories = totalEntries > 0 ? totalCalories / totalEntries : 0;
+    
+    const mealTypeBreakdown = entries.reduce((acc, entry) => {
+      acc[entry.mealType] = (acc[entry.mealType] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const avgConfidence = entries.reduce((sum, entry) => sum + entry.confidence, 0) / totalEntries || 0;
+    
+    res.json({
+      success: true,
+      analytics: {
+        totalEntries,
+        totalCalories,
+        avgCalories: Math.round(avgCalories),
+        mealTypeBreakdown,
+        avgConfidence: Math.round(avgConfidence * 100) / 100,
+        dateRange: {
+          startDate: startDate || null,
+          endDate: endDate || null
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Get nutrition analytics error:", error);
+    res.status(500).json({ 
+      error: "Failed to get nutrition analytics",
       details: error.message 
     });
   }

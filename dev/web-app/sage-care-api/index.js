@@ -7,6 +7,8 @@ const authRoute = require("./routes/auth");
 const doctorRoute = require("./routes/doctor");
 const appointmentRoute = require("./routes/appointment");
 const nutritionRoute = require("./routes/nutrition");
+const http = require('http');
+const { Server } = require('socket.io');
 
 dotenv.config();
 
@@ -56,8 +58,61 @@ app.use("/api/nutrition", nutritionRoute);
 app.use("/uploads", express.static("uploads"));
 // app.use("/api/cart", cartRoute);
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+const rooms = {};
+
+// WebRTC signaling namespace
+io.of('/signaling').on('connection', (socket) => {
+  console.log('Signaling client connected:', socket.id);
+
+  socket.on('join', ({ meetingId, name }) => {
+    socket.join(meetingId);
+    if (!rooms[meetingId]) rooms[meetingId] = {};
+    rooms[meetingId][socket.id] = name || 'Anonymous';
+    // Broadcast updated participant list
+    io.of('/signaling').to(meetingId).emit('participants', Object.values(rooms[meetingId]));
+    // Notify others
+    socket.to(meetingId).emit('notification', { type: 'join', name: rooms[meetingId][socket.id] });
+    console.log(`Socket ${socket.id} joined room ${meetingId} as ${name}`);
+  });
+
+  socket.on('signal', ({ meetingId, data }) => {
+    // Handle 'ready' signal specially
+    if (data.type === 'ready') {
+      // Notify the sender that they're ready to create offer
+      socket.emit('ready');
+    } else {
+      // Forward other signals to other participants
+      socket.to(meetingId).emit('signal', data);
+    }
+  });
+
+  socket.on('disconnecting', () => {
+    for (const meetingId of socket.rooms) {
+      if (rooms[meetingId] && rooms[meetingId][socket.id]) {
+        const name = rooms[meetingId][socket.id];
+        delete rooms[meetingId][socket.id];
+        io.of('/signaling').to(meetingId).emit('participants', Object.values(rooms[meetingId]));
+        socket.to(meetingId).emit('notification', { type: 'leave', name });
+      }
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Signaling client disconnected:', socket.id);
+  });
+});
+
 const port = process.env.PORT;
 
-app.listen(port, () => {
-  console.log(`Backend server running on port: ${port}`);
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Backend server (with signaling) running on port: ${port}`);
+  console.log(`Server accessible from network at: http://0.0.0.0:${port}`);
 });

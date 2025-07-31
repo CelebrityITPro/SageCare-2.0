@@ -1,9 +1,10 @@
-import { Box, Heading, Stack, Text, Link, useToast, Progress } from "@chakra-ui/react";
+import { Box, Heading, Stack, Text, Link, useToast, Progress, Alert, AlertIcon } from "@chakra-ui/react";
 import AuthLayout from "../layouts/AuthLayout";
 import GetStarted from "../components/onboarding/GetStarted";
 import CreatePassword from "../components/onboarding/CreatePassword";
 import CustomButton from "../components/CustomButton";
 import OtherDetails from "../components/onboarding/OtherDetails";
+import TermsAndConditionsModal from "../components/modals/TermsAndConditionsModal";
 import { useState } from "react";
 import { FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
@@ -13,8 +14,11 @@ import { Link as RouterLink } from "react-router-dom";
 
 const Signup = () => {
   const [page, setPage] = useState(1);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errorType, setErrorType] = useState<"email_exists" | "general" | "network">("general");
   const toast = useToast();
-  const { mutate: signUpUser } = useSignUp();
+  const { mutate: signUpUser, isLoading: isSigningUp } = useSignUp();
   const navigate = useNavigate();
 
   const formik = useFormik({
@@ -50,34 +54,59 @@ const Signup = () => {
       if (page === 1) {
         console.log(values);
         setPage(2);
+        // Clear any existing errors when moving to next page
+        setErrorMessage("");
       } else {
-        // Handle final submission here
-        console.log("Final submission values:", values);
-        const data = {
-          email: values.email,
-          password: values.password,
-          first_name: values.firstName,
-          last_name: values.lastName,
-          age: values.age,
-          gender: values.gender,
-          phone_number: values.phoneNumber,
-          is_patient: true,
-          is_doctor: false,
-          isAdmin: false,
-        };
-        signUpUser(
-          { data },
-          {
-            onSuccess: (res) => {
-              localStorage.setItem("token", res?.accessToken);
-              navigate("/");
-            },
-          }
-        );
+        // Show terms and conditions modal before creating account
+        setShowTermsModal(true);
       }
-      // You can send the data to your backend or perform any other action
     },
   });
+
+  const handleTermsAccept = () => {
+    setShowTermsModal(false);
+    const data = {
+      email: formik.values.email,
+      password: formik.values.password,
+      first_name: formik.values.firstName,
+      last_name: formik.values.lastName,
+      age: formik.values.age,
+      gender: formik.values.gender,
+      phone_number: formik.values.phoneNumber,
+      is_patient: true,
+      is_doctor: false,
+      isAdmin: false,
+    };
+    
+    signUpUser(
+      { data },
+      {
+        onSuccess: (res) => {
+          localStorage.setItem("token", res?.accessToken);
+          navigate("/");
+        },
+                 onError: (error: any) => {
+           console.error("Signup error:", error);
+           
+           // Handle different types of errors
+           if (error?.message?.includes("email") || error?.message?.includes("already exists")) {
+             setErrorMessage("A user with this email already exists");
+             setErrorType("email_exists");
+           } else if (error?.message?.includes("network") || error?.message?.includes("connection")) {
+             setErrorMessage("Network error. Please check your connection and try again.");
+             setErrorType("network");
+           } else {
+             setErrorMessage(error?.message || "Account creation failed. Please try again.");
+             setErrorType("general");
+           }
+         },
+      }
+    );
+  };
+
+  const clearError = () => {
+    setErrorMessage("");
+  };
 
   return (
     <AuthLayout>
@@ -99,8 +128,32 @@ const Signup = () => {
             {`We’ll create an account if you don’t have one yet.`}
           </Text>
           <Progress value={page === 1 ? 50 : 100} size="sm" colorScheme="brand" borderRadius="full" mb="24px" />
+          
+          {/* Error Alert */}
+          {errorMessage && (
+            <Alert 
+              status={errorType === "email_exists" ? "warning" : "error"} 
+              borderRadius="md" 
+              mb="20px"
+              onClose={clearError}
+              isClosable
+            >
+              <AlertIcon />
+              <Box>
+                <Text fontSize="sm" fontWeight="medium">
+                  {errorMessage}
+                </Text>
+                {errorType === "email_exists" && (
+                  <Text fontSize="xs" color="gray.600" mt="4px">
+                    Try signing in with your existing account or use a different email address.
+                  </Text>
+                )}
+              </Box>
+            </Alert>
+          )}
+          
           <FormikProvider value={formik}>
-            <form>
+            <form onChange={() => setErrorMessage("")}>
               <Stack spacing={"20px"}>
                 {page === 1 && (
                   <>
@@ -137,6 +190,14 @@ const Signup = () => {
           </Link>
         </Box>
       </Box>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAccept={handleTermsAccept}
+        isLoading={isSigningUp}
+      />
     </AuthLayout>
   );
 };

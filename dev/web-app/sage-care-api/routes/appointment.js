@@ -7,6 +7,9 @@ const {
   getUserParticipationStats, 
   getAppointmentParticipationReport 
 } = require("../utils/appointmentTracking");
+const fetch = require("node-fetch"); // Add at the top for Daily.co API requests
+const crypto = require('crypto');
+const Transcript = require('../models/Transcript');
 
 // GET /api/appointments
 router.get("/", async (req, res) => {
@@ -75,11 +78,11 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Generate unique Jitsi room name
-    const roomName = `consult-${patient}-${Date.now()}`;
-    const jitsiLink = `https://meet.jit.si/${roomName}`;
-
-    console.log("Appointment creation - Generated Jitsi link:", jitsiLink);
+    // --- Meeting ID Generation ---
+    const meetingId = crypto.randomBytes(16).toString('hex'); // 32-char hex string
+    // Use environment variable for base URL or default to localhost
+    const baseUrl = process.env.CONSULTATION_BASE_URL || 'http://localhost:3000';
+    const consultationLink = `${baseUrl}/consultation/${meetingId}`;
 
     // Create appointment with UTC times
     const date = new Date(startTime);
@@ -99,7 +102,7 @@ router.post("/", async (req, res) => {
       startTime,
       endTime,
       notes,
-      jitsiLink,
+      meetingId,
       thirdParty: thirdPartyData,
       timezone,
     });
@@ -115,7 +118,7 @@ router.post("/", async (req, res) => {
         doctor,
         patient,
         thirdParty: appointment.thirdParty,
-        jitsiLink,
+        consultationLink,
         date: appointment.date,
         startTime: appointment.startTime,
         endTime: appointment.endTime,
@@ -132,6 +135,7 @@ router.post("/", async (req, res) => {
     res.status(201).json({ 
       success: true, 
       appointment,
+      consultationLink,
       message: "Appointment created successfully. Email notifications sent."
     });
   } catch (err) {
@@ -321,6 +325,32 @@ router.post("/check-missed", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: "Failed to check missed consultations" });
+  }
+});
+
+// PUT /api/appointments/:meetingId/transcript
+router.put('/:meetingId/transcript', async (req, res) => {
+  const { meetingId } = req.params;
+  const { transcript } = req.body;
+  try {
+    // Find the appointment
+    const appointment = await Appointment.findOne({ meetingId });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    // Upsert transcript
+    const updated = await Transcript.findOneAndUpdate(
+      { meetingId },
+      {
+        appointment: appointment._id,
+        meetingId,
+        transcript,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    res.json({ success: true, transcript: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed to save transcript' });
   }
 });
 

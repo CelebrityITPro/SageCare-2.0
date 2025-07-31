@@ -25,6 +25,7 @@ import {
 import { FiSearch, FiEye } from "react-icons/fi";
 import ViewDoctorModal from "./ViewDoctorModal";
 
+
 interface Doctor {
   _id: string;
   first_name: string;
@@ -115,6 +116,8 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
       if (response.ok) {
         const data = await response.json();
         setDoctors(data || []);
+      } else {
+        console.error('Failed to fetch doctors:', response.status);
       }
     } catch (error) {
       console.error('Failed to fetch doctors:', error);
@@ -196,6 +199,8 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
         },
         body: JSON.stringify(appointmentData),
       });
+
+      console.log('Appointment creation response:', response);
 
       if (response.ok) {
         const result = await response.json();

@@ -37,7 +37,20 @@ const NutritionEntrySchema = new mongoose.Schema(
       sugar: { type: Number },
       sodium: { type: Number },
       confidence: { type: Number }
-    }]
+    }],
+    analysisMetadata: {
+      modelVersion: { type: String, default: "food-101-v1" },
+      processingTime: { type: Number },
+      imageQuality: { type: Number },
+      foodLabel: { type: String }
+    },
+    userFeedback: {
+      accuracyRating: { type: Number, min: 1, max: 5 },
+      helpfulRecommendations: [{ type: String }],
+      ignoredRecommendations: [{ type: String }]
+    },
+    tags: [{ type: String }],
+    isPublic: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

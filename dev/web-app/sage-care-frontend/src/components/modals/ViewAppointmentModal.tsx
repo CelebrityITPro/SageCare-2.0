@@ -175,7 +175,7 @@ const ViewAppointmentModal: React.FC<ViewAppointmentModalProps> = ({
                   <Text fontWeight="500" color="gray.700">Participation</Text>
                   <Badge colorScheme={participationStatus.color as any} variant="outline">
                     <HStack spacing={1}>
-                      <Icon as={participationStatus.icon} size="xs" />
+                      <Icon as={participationStatus.icon} boxSize="12px" />
                       <Text>{participationStatus.status}</Text>
                     </HStack>
                   </Badge>

@@ -33,8 +33,11 @@ const AppointmentSchema = mongoose.Schema(
     notes: {
       type: String,
     },
-    jitsiLink: {
+    meetingId: {
       type: String,
+      required: true,
+      unique: true,
+      index: true,
     },
     timezone: {
       type: String,

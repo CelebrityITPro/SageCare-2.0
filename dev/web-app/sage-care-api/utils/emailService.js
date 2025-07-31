@@ -32,7 +32,7 @@ const formatLocalTime = (date, timezone) => {
 };
 
 // Email templates for different recipient types
-const createDoctorEmail = (doctorName, patientName, jitsiLink, appointmentDetails) => {
+const createDoctorEmail = (doctorName, patientName, consultationLink, appointmentDetails) => {
   const { startTime, endTime, notes, timezone } = appointmentDetails;
   const showLocal = timezone && timezone.length > 0;
   
@@ -59,12 +59,12 @@ const createDoctorEmail = (doctorName, patientName, jitsiLink, appointmentDetail
         <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #27ae60; margin-top: 0;">Start Your Consultation:</h3>
           <p>Click the link below to join your video consultation:</p>
-          <a href="${jitsiLink}" 
+          <a href="${consultationLink}" 
              style="display: inline-block; background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
             Join Video Consultation
           </a>
           <p style="margin-top: 10px; font-size: 14px; color: #666;">
-            Or copy this link: <a href="${jitsiLink}">${jitsiLink}</a>
+            Or copy this link: <a href="${consultationLink}">${consultationLink}</a>
           </p>
         </div>
         
@@ -78,7 +78,7 @@ const createDoctorEmail = (doctorName, patientName, jitsiLink, appointmentDetail
   };
 };
 
-const createPatientEmail = (patientName, doctorName, jitsiLink, appointmentDetails) => {
+const createPatientEmail = (patientName, doctorName, consultationLink, appointmentDetails) => {
   const { startTime, endTime, notes, timezone } = appointmentDetails;
   const showLocal = timezone && timezone.length > 0;
   
@@ -105,12 +105,12 @@ const createPatientEmail = (patientName, doctorName, jitsiLink, appointmentDetai
         <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #27ae60; margin-top: 0;">Join Your Consultation:</h3>
           <p>Click the link below to join your video consultation:</p>
-          <a href="${jitsiLink}" 
+          <a href="${consultationLink}" 
              style="display: inline-block; background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
             Join Video Consultation
           </a>
           <p style="margin-top: 10px; font-size: 14px; color: #666;">
-            Or copy this link: <a href="${jitsiLink}">${jitsiLink}</a>
+            Or copy this link: <a href="${consultationLink}">${consultationLink}</a>
           </p>
         </div>
         
@@ -134,7 +134,7 @@ const createPatientEmail = (patientName, doctorName, jitsiLink, appointmentDetai
   };
 };
 
-const createThirdPartyEmail = (jitsiLink, appointmentDetails, thirdPartyName = '') => {
+const createThirdPartyEmail = (consultationLink, appointmentDetails, thirdPartyName = '') => {
   const { startTime, endTime, notes, timezone } = appointmentDetails;
   const showLocal = timezone && timezone.length > 0;
   
@@ -160,12 +160,12 @@ const createThirdPartyEmail = (jitsiLink, appointmentDetails, thirdPartyName = '
         <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #27ae60; margin-top: 0;">Join the Consultation:</h3>
           <p>Click the link below to join the video consultation:</p>
-          <a href="${jitsiLink}" 
+          <a href="${consultationLink}" 
              style="display: inline-block; background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
             Join Video Consultation
           </a>
           <p style="margin-top: 10px; font-size: 14px; color: #666;">
-            Or copy this link: <a href="${jitsiLink}">${jitsiLink}</a>
+            Or copy this link: <a href="${consultationLink}">${consultationLink}</a>
           </p>
         </div>
         
@@ -282,7 +282,7 @@ const createUpdatePatientEmail = (patientName, doctorName, jitsiLink, appointmen
   };
 };
 
-const createUpdateThirdPartyEmail = (jitsiLink, appointmentDetails) => {
+const createUpdateThirdPartyEmail = (consultationLink, appointmentDetails) => {
   const { startTime, endTime, notes, timezone } = appointmentDetails;
   const showLocal = timezone && timezone.length > 0;
   
@@ -308,12 +308,12 @@ const createUpdateThirdPartyEmail = (jitsiLink, appointmentDetails) => {
         <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #27ae60; margin-top: 0;">Join the Consultation:</h3>
           <p>Click the link below to join the video consultation:</p>
-          <a href="${jitsiLink}" 
+          <a href="${consultationLink}" 
              style="display: inline-block; background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
             Join Video Consultation
           </a>
           <p style="margin-top: 10px; font-size: 14px; color: #666;">
-            Or copy this link: <a href="${jitsiLink}">${jitsiLink}</a>
+            Or copy this link: <a href="${consultationLink}">${consultationLink}</a>
           </p>
         </div>
         
@@ -465,7 +465,7 @@ const sendAppointmentNotifications = async (appointmentData) => {
     doctor, 
     patient, 
     thirdParty, 
-    jitsiLink, 
+    consultationLink, 
     date, 
     startTime, 
     endTime, 
@@ -524,7 +524,7 @@ const sendAppointmentNotifications = async (appointmentData) => {
         emailHtml = createDoctorEmail(
           `${doctorDoc.first_name} ${doctorDoc.last_name}`,
           `${patientDoc.first_name} ${patientDoc.last_name}`,
-          jitsiLink,
+          consultationLink,
           appointmentDetails
         );
         subject = emailHtml.subject;
@@ -532,7 +532,7 @@ const sendAppointmentNotifications = async (appointmentData) => {
         emailHtml = createUpdateDoctorEmail(
           `${doctorDoc.first_name} ${doctorDoc.last_name}`,
           `${patientDoc.first_name} ${patientDoc.last_name}`,
-          jitsiLink,
+          consultationLink,
           appointmentDetails
         );
         subject = emailHtml.subject;
@@ -564,7 +564,7 @@ const sendAppointmentNotifications = async (appointmentData) => {
         emailHtml = createPatientEmail(
           `${patientDoc.first_name} ${patientDoc.last_name}`,
           `${doctorDoc.first_name} ${doctorDoc.last_name}`,
-          jitsiLink,
+          consultationLink,
           appointmentDetails
         );
         subject = emailHtml.subject;
@@ -572,7 +572,7 @@ const sendAppointmentNotifications = async (appointmentData) => {
         emailHtml = createUpdatePatientEmail(
           `${patientDoc.first_name} ${patientDoc.last_name}`,
           `${doctorDoc.first_name} ${doctorDoc.last_name}`,
-          jitsiLink,
+          consultationLink,
           appointmentDetails
         );
         subject = emailHtml.subject;
@@ -641,7 +641,7 @@ const sendAppointmentNotifications = async (appointmentData) => {
       // Send new invitation to new third party
       if (hasNewThirdParty) {
         console.log('Sending invitation email to new third party:', currentThirdParty.email);
-        const newThirdPartyEmail = createThirdPartyEmail(jitsiLink, appointmentDetails, currentThirdParty.name);
+        const newThirdPartyEmail = createThirdPartyEmail(consultationLink, appointmentDetails, currentThirdParty.name);
         const newThirdPartyResult = await sendEmail(
           currentThirdParty.email,
           newThirdPartyEmail.subject,
@@ -656,10 +656,10 @@ const sendAppointmentNotifications = async (appointmentData) => {
         let subject;
 
         if (notificationType === 'new') {
-          emailHtml = createThirdPartyEmail(jitsiLink, appointmentDetails, currentThirdParty.name);
+          emailHtml = createThirdPartyEmail(consultationLink, appointmentDetails, currentThirdParty.name);
           subject = emailHtml.subject;
         } else if (notificationType === 'update') {
-          emailHtml = createUpdateThirdPartyEmail(jitsiLink, appointmentDetails);
+          emailHtml = createUpdateThirdPartyEmail(consultationLink, appointmentDetails);
           subject = emailHtml.subject;
         } else if (notificationType === 'cancel') {
           emailHtml = createCancellationThirdPartyEmail(appointmentDetails, currentThirdParty.name);

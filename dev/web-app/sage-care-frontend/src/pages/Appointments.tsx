@@ -43,6 +43,7 @@ import BookDoctorModal from "../components/modals/BookDoctorModal";
 import EditAppointmentModal from "../components/modals/EditAppointmentModal";
 import ViewAppointmentModal from "../components/modals/ViewAppointmentModal";
 
+
 interface Appointment {
   _id: string;
   doctor: string;
@@ -124,7 +125,7 @@ const Appointments = () => {
         const doctorPromises = doctorIds.map(id => 
           fetch(`http://localhost:5000/api/doctors/${id}`).then(res => res.json())
         );
-        
+      
         const doctorResults = await Promise.all(doctorPromises);
         const doctorMap: { [key: string]: Doctor } = {};
         doctorResults.forEach(doctor => {
@@ -365,7 +366,7 @@ const Appointments = () => {
                 {participationStatus && (
                   <Badge colorScheme={participationStatus.color as any} variant="outline">
                     <HStack spacing={1}>
-                      <Icon as={participationStatus.icon} size="xs" />
+                      <Icon as={participationStatus.icon} boxSize="12px" />
                       <Text>{participationStatus.status}</Text>
                     </HStack>
                   </Badge>

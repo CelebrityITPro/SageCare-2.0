@@ -19,6 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
+
 interface Appointment {
   _id: string;
   doctor: string;
@@ -88,7 +89,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
         const doctorPromises = doctorIds.map(id => 
           fetch(`http://localhost:5000/api/doctors/${id}`).then(res => res.json())
         );
-        
+      
         const doctorResults = await Promise.all(doctorPromises);
         const doctorMap: { [key: string]: Doctor } = {};
         doctorResults.forEach(doctor => {

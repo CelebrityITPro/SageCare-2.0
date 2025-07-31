@@ -1,4 +1,3 @@
-# Backend Dockerfile for development
 FROM node:18
 
 WORKDIR /usr/src/app

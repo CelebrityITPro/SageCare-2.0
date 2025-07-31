@@ -15,6 +15,7 @@ import {
   useToast
 } from '@chakra-ui/react';
 
+
 interface Appointment {
   _id: string;
   doctor: string;
@@ -63,25 +64,31 @@ const VideoConsultation: React.FC = () => {
       
       // Fetch appointment details
       const appointmentResponse = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`);
-      if (!appointmentResponse.ok) {
-        throw new Error('Appointment not found');
-      }
-      
-      const appointmentData = await appointmentResponse.json();
-      setAppointment(appointmentData.appointment);
+      if (appointmentResponse.ok) {
+        const appointmentData = await appointmentResponse.json();
+        setAppointment(appointmentData.appointment);
 
-      // Fetch doctor details
-      const doctorResponse = await fetch(`http://localhost:5000/api/doctors/${appointmentData.appointment.doctor}`);
-      if (doctorResponse.ok) {
-        const doctorData = await doctorResponse.json();
-        setDoctor(doctorData);
-      }
+        // Fetch doctor details
+        try {
+          const doctorResponse = await fetch(`http://localhost:5000/api/doctors/${appointmentData.appointment.doctor}`);
+          if (doctorResponse.ok) {
+            const doctorData = await doctorResponse.json();
+            setDoctor(doctorData);
+          }
+        } catch (err) {
+          console.error('Failed to fetch doctor details:', err);
+        }
 
-      // Fetch patient details using public endpoint
-      const patientResponse = await fetch(`http://localhost:5000/api/users/public/${appointmentData.appointment.patient}`);
-      if (patientResponse.ok) {
-        const patientData = await patientResponse.json();
-        setPatient(patientData.user);
+        // Fetch patient details using public endpoint
+        try {
+          const patientResponse = await fetch(`http://localhost:5000/api/users/public/${appointmentData.appointment.patient}`);
+          if (patientResponse.ok) {
+            const patientData = await patientResponse.json();
+            setPatient(patientData.user);
+          }
+        } catch (err) {
+          console.error('Failed to fetch patient details:', err);
+        }
       }
 
     } catch (err) {

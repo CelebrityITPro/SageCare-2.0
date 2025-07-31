@@ -1,14 +1,25 @@
 import { useMutation } from "@tanstack/react-query";
-import { Request } from "./request";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export const useSignUp = () => {
   return useMutation({
-    mutationFn: ({ data }: { data: unknown }) =>
-      Request.post(`/auth/sign-up`, data)
-        .then((res) => res?.data)
-        .catch((err) => {
-          throw new err();
-        }),
+    mutationFn: async ({ data }: { data: unknown }) => {
+      const response = await fetch(`${API_BASE_URL}/auth/sign-up`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw errorData || new Error('Sign up failed');
+      }
+      
+      return response.json();
+    },
     onSuccess: (data) => {
       console.log(data);
     },
@@ -17,22 +28,31 @@ export const useSignUp = () => {
 
 export const useLoginUser = () => {
   return useMutation({
-    mutationFn: ({ data }: { data: unknown }) =>
-      Request.post(`/auth/login`, data)
-        .then((res) => {
-          const data = res?.data;
-          if (data.accessToken) {
-            localStorage.setItem("token", data?.accessToken);
-            localStorage.setItem("userId", data?._id);
-            // Store the full user object (excluding password and accessToken)
-            const { password, accessToken, ...userData } = data;
-            localStorage.setItem("user", JSON.stringify(userData));
-            return res?.data;
-          }
-          throw new Error("No access token");
-        })
-        .catch((err) => {
-          throw err?.response?.data;
-        }),
+    mutationFn: async ({ data }: { data: unknown }) => {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw errorData || new Error('Login failed');
+      }
+      
+      const responseData = await response.json();
+      
+      if (responseData.accessToken) {
+        localStorage.setItem("token", responseData.accessToken);
+        localStorage.setItem("userId", responseData._id);
+        // Store the full user object (excluding password and accessToken)
+        const { password, accessToken, ...userData } = responseData;
+        localStorage.setItem("user", JSON.stringify(userData));
+        return responseData;
+      }
+      throw new Error("No access token");
+    },
   });
 };

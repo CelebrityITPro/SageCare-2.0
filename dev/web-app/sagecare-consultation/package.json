@@ -1,0 +1,58 @@
+{
+  "name": "sagecare-consultation",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "cra-template-pwa-typescript": "2.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.30.1",
+    "react-scripts": "^5.0.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.7.5",
+    "typescript": "^4.9.5",
+    "wav-encoder": "^1.3.0",
+    "web-vitals": "^5.0.3"
+  },
+  "scripts": {
+    "start": "cross-env HOST=0.0.0.0 react-scripts start",
+    "start:https": "cross-env HOST=0.0.0.0 HTTPS=true SSL_CRT_FILE=localhost.pem SSL_KEY_FILE=localhost-key.pem react-scripts start",
+    "start:both": "npm run generate-certs && npm run start:https",
+    "setup": "powershell -ExecutionPolicy Bypass -File .\\setup-https.ps1",
+    "setup:https": "powershell -ExecutionPolicy Bypass -File .\\setup-https.ps1 -HTTPS",
+    "setup:http": "powershell -ExecutionPolicy Bypass -File .\\setup-https.ps1 -HTTP",
+    "setup:both": "powershell -ExecutionPolicy Bypass -File .\\setup-https.ps1 -Both",
+    "generate-certs": "powershell -ExecutionPolicy Bypass -File .\\generate-ssl.ps1",
+    "generate-certs-simple": "powershell -ExecutionPolicy Bypass -File .\\generate-ssl-simple.ps1",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/testing-library__react": "^10.0.1",
+    "cross-env": "^10.0.0"
+  }
+}

@@ -47,7 +47,14 @@ import {
   FiCheckCircle,
   FiAlertCircle,
   FiInfo,
+  FiClock,
+  FiStar,
 } from "react-icons/fi";
+import AnalysisResultModal from '../components/nutrition/AnalysisResultModal';
+import FoodHistoryItem from '../components/nutrition/FoodHistoryItem';
+import FoodDetailModal from '../components/nutrition/FoodDetailModal';
+import RecommendationsList from '../components/nutrition/RecommendationsList';
+
 
 interface NutritionData {
   calories: number;
@@ -59,6 +66,7 @@ interface NutritionData {
   sodium: number;
   foodItems: string[];
   confidence: number;
+  tips?: string[];
 }
 
 interface DietPlan {
@@ -90,6 +98,11 @@ const Nutrition = () => {
   const [dietPlans, setDietPlans] = useState<DietPlan[]>([]);
   const [activeTab, setActiveTab] = useState(0);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<MealEntry | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userId, setUserId] = useState("6865b7a445c5856a18f596a6"); // Default user ID
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const { isOpen: isDietPlanModalOpen, onOpen: onDietPlanModalOpen, onClose: onDietPlanModalClose } = useDisclosure();
@@ -97,12 +110,12 @@ const Nutrition = () => {
   // Fetch nutrition history from database
   const fetchNutritionHistory = async () => {
     try {
+      // Try to get user ID from localStorage first, fallback to default
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const userId = user._id;
+      const localStorageUserId = user._id;
       
-      if (!userId) {
-        console.error('No user ID found');
-        return;
+      if (localStorageUserId) {
+        setUserId(localStorageUserId);
       }
       
       const response = await fetch(`http://localhost:5000/api/nutrition/history/${userId}`);
@@ -114,7 +127,10 @@ const Nutrition = () => {
           date: entry.date,
           mealType: entry.mealType,
           imageUrl: `/api/nutrition/entry/${entry._id}/image`, // URL to fetch image
-          nutritionData: entry.nutrition,
+          nutritionData: {
+            ...entry.nutrition,
+            foodItems: entry.foodItems || []
+          },
           notes: entry.notes
         }));
         setMealEntries(entries);
@@ -127,31 +143,25 @@ const Nutrition = () => {
   // Fetch history on component mount
   React.useEffect(() => {
     fetchNutritionHistory();
-  }, []);
+  }, [userId]);
 
-  // Mock nutrition analysis function (replace with actual AI API call)
+  // Food analysis function using Food-101 inference server
   const analyzeFoodImage = async (imageFile: File): Promise<NutritionData> => {
     try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('mealType', 'lunch'); // Default meal type
-      formData.append('notes', 'Analyzed from uploaded image');
+      // Import the food analysis function
+      const { analyzeFoodImage: analyzeFood, convertToNutritionData } = await import('../api/food');
       
-      // Get user ID from localStorage
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      formData.append('userId', user._id || 'default-user');
+      // Analyze the image using the Food-101 inference server
+      const analysisResult = await analyzeFood(imageFile);
       
-      const response = await fetch('http://localhost:5000/api/nutrition/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to analyze image');
+      if (!analysisResult.success) {
+        throw new Error(analysisResult.error || 'Analysis failed');
       }
       
-      const result = await response.json();
-      return result.analysis.nutrition;
+      // Convert to the format expected by the frontend
+      const nutritionData = convertToNutritionData(analysisResult);
+      nutritionData.tips = analysisResult.tips;
+      return nutritionData;
     } catch (error) {
       console.error('Food analysis error:', error);
       throw error;
@@ -175,27 +185,7 @@ const Nutrition = () => {
     try {
       const analysis = await analyzeFoodImage(selectedImage);
       setNutritionData(analysis);
-      
-      // The entry is now saved in the database by the API
-      // We can fetch the updated list or just add to local state
-      const newMealEntry: MealEntry = {
-        id: Date.now().toString(), // This will be replaced by the actual DB ID
-        date: new Date().toISOString(),
-        mealType: "lunch", // Default, could be made selectable
-        imageUrl: previewUrl,
-        nutritionData: analysis,
-        notes: "Analyzed from uploaded image"
-      };
-      
-      setMealEntries(prev => [newMealEntry, ...prev]);
-      
-      toast({
-        title: "Analysis Complete",
-        description: "Your food has been analyzed and saved successfully!",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      setShowAnalysisModal(true);
     } catch (error) {
       toast({
         title: "Analysis Failed",
@@ -206,8 +196,85 @@ const Nutrition = () => {
       });
     } finally {
       setIsAnalyzing(false);
-      setShowUploadModal(false);
     }
+  };
+
+  const handleSaveAnalysis = async (mealType: string, notes: string) => {
+    if (!nutritionData || !selectedImage) return;
+    
+    setIsSaving(true);
+    try {
+      // Create FormData to send image and data to backend
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      formData.append('userId', userId);
+      formData.append('mealType', mealType);
+      formData.append('notes', notes);
+      
+      // Save to backend
+      const response = await fetch('http://localhost:5000/api/nutrition/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save analysis');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Add to meal entries with the backend-generated ID
+        const newEntry: MealEntry = {
+          id: result.entryId,
+          date: new Date().toISOString(),
+          mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
+          imageUrl: `/api/nutrition/entry/${result.entryId}/image`,
+          nutritionData: nutritionData,
+          notes: notes,
+        };
+        
+        setMealEntries(prev => [newEntry, ...prev]);
+        
+        // Reset form
+        setSelectedImage(null);
+        setPreviewUrl("");
+        setShowAnalysisModal(false);
+        setNutritionData(null);
+        
+        toast({
+          title: "Analysis Saved",
+          description: "Your food analysis has been saved successfully! Recommendations have been generated.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error(result.error || 'Failed to save analysis');
+      }
+    } catch (error) {
+      console.error('Save analysis error:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save analysis. Please try again.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleViewDetails = (entry: MealEntry) => {
+    setSelectedEntry(entry);
+    setShowDetailModal(true);
+  };
+
+  const handleDeleteEntry = (entryId: string) => {
+    setMealEntries(prev => prev.filter(entry => entry.id !== entryId));
+    setShowDetailModal(false);
+    setSelectedEntry(null);
   };
 
   const getDailyNutrition = () => {
@@ -278,7 +345,7 @@ const Nutrition = () => {
             </HStack>
             
             <Text fontWeight="semibold" mb={2}>
-              {entry.nutritionData.foodItems.join(", ")}
+              {entry.nutritionData.foodItems?.join(", ") || "No food items detected"}
             </Text>
             
             <HStack spacing={4} fontSize="sm" color="gray.600">
@@ -342,10 +409,22 @@ const Nutrition = () => {
         {/* Main Content Tabs */}
         <Tabs variant="enclosed" colorScheme="brand" index={activeTab} onChange={setActiveTab}>
           <TabList>
-            <Tab>Overview</Tab>
-            <Tab>Meal History</Tab>
-            <Tab>Diet Plans</Tab>
-            <Tab>Recommendations</Tab>
+            <Tab>
+              <Icon as={FiBarChart} mr={2} />
+              Overview
+            </Tab>
+            <Tab>
+                              <Icon as={FiClock} mr={2} />
+              Food History
+            </Tab>
+            <Tab>
+              <Icon as={FiTarget} mr={2} />
+              Diet Plans
+            </Tab>
+            <Tab>
+              <Icon as={FiStar} mr={2} />
+              Recommendations
+            </Tab>
           </TabList>
 
           <TabPanels>
@@ -437,24 +516,30 @@ const Nutrition = () => {
               </Grid>
             </TabPanel>
 
-            {/* Meal History Tab */}
+            {/* Food History Tab */}
             <TabPanel>
               <Card>
                 <CardBody>
-                  <Heading size="md" mb={4}>Meal History</Heading>
+                  <Heading size="md" mb={4}>Food History</Heading>
                   {mealEntries.length === 0 ? (
                     <Box textAlign="center" py={8}>
-                      <Icon as={FiBarChart} size="48px" color="gray.400" mb={4} />
+                      <Icon as={FiClock} size="48px" color="gray.400" mb={4} />
                       <Text fontSize="lg" fontWeight="semibold" color="gray.600">
-                        No meals tracked yet
+                        No food analyses yet
                       </Text>
                       <Text color="gray.500">
-                        Start by uploading your first food image
+                        Start by uploading a food image to track your nutrition
                       </Text>
                     </Box>
                   ) : (
                     <VStack spacing={4} align="stretch">
-                      {mealEntries.map(renderNutritionCard)}
+                      {mealEntries.map((entry) => (
+                        <FoodHistoryItem
+                          key={entry.id}
+                          entry={entry}
+                          onViewDetails={handleViewDetails}
+                        />
+                      ))}
                     </VStack>
                   )}
                 </CardBody>
@@ -527,42 +612,7 @@ const Nutrition = () => {
 
             {/* Recommendations Tab */}
             <TabPanel>
-              <Card>
-                <CardBody>
-                  <Heading size="md" mb={4}>Personalized Recommendations</Heading>
-                  <VStack spacing={4} align="stretch">
-                    <Box p={4} bg="blue.50" borderRadius="md">
-                      <HStack spacing={2} mb={2}>
-                        <Icon as={FiTrendingUp} color="blue.500" />
-                        <Text fontWeight="semibold" color="blue.700">Nutrition Tips</Text>
-                      </HStack>
-                      <Text fontSize="sm" color="blue.600">
-                        Based on your recent meals, consider adding more leafy greens and whole grains to your diet.
-                      </Text>
-                    </Box>
-                    
-                    <Box p={4} bg="green.50" borderRadius="md">
-                      <HStack spacing={2} mb={2}>
-                        <Icon as={FiCheckCircle} color="green.500" />
-                        <Text fontWeight="semibold" color="green.700">Good Habits</Text>
-                      </HStack>
-                      <Text fontSize="sm" color="green.600">
-                        You're doing great with protein intake! Keep up the good work.
-                      </Text>
-                    </Box>
-                    
-                    <Box p={4} bg="orange.50" borderRadius="md">
-                      <HStack spacing={2} mb={2}>
-                        <Icon as={FiAlertCircle} color="orange.500" />
-                        <Text fontWeight="semibold" color="orange.700">Areas for Improvement</Text>
-                      </HStack>
-                      <Text fontSize="sm" color="orange.600">
-                        Consider reducing processed foods and increasing fiber intake for better digestive health.
-                      </Text>
-                    </Box>
-                  </VStack>
-                </CardBody>
-              </Card>
+              <RecommendationsList userId={userId} />
             </TabPanel>
           </TabPanels>
         </Tabs>
@@ -573,7 +623,7 @@ const Nutrition = () => {
         <ModalOverlay />
         <ModalContent borderRadius="xl" p="0">
           <ModalHeader borderTopRadius="xl" bg="brand.50" color="brand.900" fontWeight="bold">
-            Analyze Food Image
+            {nutritionData ? 'Analysis Results' : 'Analyze Food Image'}
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody p={6}>
@@ -590,42 +640,106 @@ const Nutrition = () => {
                 </Box>
               )}
               
-              <Box>
-                <Text fontWeight="semibold" mb={2}>What we'll analyze:</Text>
-                <VStack spacing={2} align="stretch" fontSize="sm" color="gray.600">
-                  <HStack spacing={2}>
-                    <Icon as={FiCheckCircle} color="green.500" />
-                    <Text>Food identification and ingredients</Text>
-                  </HStack>
-                  <HStack spacing={2}>
-                    <Icon as={FiCheckCircle} color="green.500" />
-                    <Text>Calorie and macronutrient content</Text>
-                  </HStack>
-                  <HStack spacing={2}>
-                    <Icon as={FiCheckCircle} color="green.500" />
-                    <Text>Portion size estimation</Text>
-                  </HStack>
-                  <HStack spacing={2}>
-                    <Icon as={FiCheckCircle} color="green.500" />
-                    <Text>Nutritional recommendations</Text>
-                  </HStack>
+              {nutritionData ? (
+                // Show analysis results
+                <VStack spacing={4} align="stretch">
+                  <Box>
+                    <Text fontWeight="bold" fontSize="lg" mb={2}>
+                      {nutritionData.foodItems?.[0]?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Analyzed Food'}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" mb={3}>
+                      Confidence: {(nutritionData.confidence * 100).toFixed(1)}%
+                    </Text>
+                  </Box>
+                  
+                  <Box>
+                    <Text fontWeight="semibold" mb={2}>Nutrition Information:</Text>
+                    <Grid templateColumns="repeat(2, 1fr)" gap={3} fontSize="sm">
+                      <Box>
+                        <Text color="gray.600">Calories</Text>
+                        <Text fontWeight="semibold">{nutritionData.calories}</Text>
+                      </Box>
+                      <Box>
+                        <Text color="gray.600">Protein</Text>
+                        <Text fontWeight="semibold">{nutritionData.protein}g</Text>
+                      </Box>
+                      <Box>
+                        <Text color="gray.600">Carbs</Text>
+                        <Text fontWeight="semibold">{nutritionData.carbs}g</Text>
+                      </Box>
+                      <Box>
+                        <Text color="gray.600">Fat</Text>
+                        <Text fontWeight="semibold">{nutritionData.fat}g</Text>
+                      </Box>
+                      <Box>
+                        <Text color="gray.600">Fiber</Text>
+                        <Text fontWeight="semibold">{nutritionData.fiber}g</Text>
+                      </Box>
+                      <Box>
+                        <Text color="gray.600">Sugar</Text>
+                        <Text fontWeight="semibold">{nutritionData.sugar}g</Text>
+                      </Box>
+                    </Grid>
+                  </Box>
+                  
+                  {nutritionData.tips && nutritionData.tips.length > 0 && (
+                    <Box>
+                      <Text fontWeight="semibold" mb={2}>Health Tips:</Text>
+                      <VStack spacing={2} align="stretch">
+                        {nutritionData.tips.map((tip, index) => (
+                          <HStack key={index} spacing={2} p={3} bg="blue.50" borderRadius="md">
+                            <Icon as={FiInfo} color="blue.500" />
+                            <Text fontSize="sm" color="blue.700">{tip}</Text>
+                          </HStack>
+                        ))}
+                      </VStack>
+                    </Box>
+                  )}
                 </VStack>
-              </Box>
+              ) : (
+                // Show analysis features
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>What we'll analyze:</Text>
+                  <VStack spacing={2} align="stretch" fontSize="sm" color="gray.600">
+                    <HStack spacing={2}>
+                      <Icon as={FiCheckCircle} color="green.500" />
+                      <Text>Food identification using AI</Text>
+                    </HStack>
+                    <HStack spacing={2}>
+                      <Icon as={FiCheckCircle} color="green.500" />
+                      <Text>Calorie and macronutrient content</Text>
+                    </HStack>
+                    <HStack spacing={2}>
+                      <Icon as={FiCheckCircle} color="green.500" />
+                      <Text>Nutritional analysis</Text>
+                    </HStack>
+                    <HStack spacing={2}>
+                      <Icon as={FiCheckCircle} color="green.500" />
+                      <Text>Personalized health tips</Text>
+                    </HStack>
+                  </VStack>
+                </Box>
+              )}
             </VStack>
           </ModalBody>
           <Box p={6} borderTop="1px solid" borderColor="gray.200">
             <HStack spacing={4} justify="flex-end">
-              <Button variant="ghost" onClick={() => setShowUploadModal(false)}>
-                Cancel
+              <Button variant="ghost" onClick={() => {
+                setShowUploadModal(false);
+                setNutritionData(null);
+              }}>
+                {nutritionData ? 'Close' : 'Cancel'}
               </Button>
-              <Button
-                colorScheme="brand"
-                onClick={handleAnalyzeFood}
-                isLoading={isAnalyzing}
-                loadingText="Analyzing..."
-              >
-                Analyze Food
-              </Button>
+              {!nutritionData && (
+                <Button
+                  colorScheme="brand"
+                  onClick={handleAnalyzeFood}
+                  isLoading={isAnalyzing}
+                  loadingText="Analyzing..."
+                >
+                  Analyze Food
+                </Button>
+              )}
             </HStack>
           </Box>
         </ModalContent>
@@ -685,6 +799,24 @@ const Nutrition = () => {
           </Box>
         </ModalContent>
       </Modal>
+
+      {/* Analysis Result Modal */}
+      <AnalysisResultModal
+        isOpen={showAnalysisModal}
+        onClose={() => setShowAnalysisModal(false)}
+        nutritionData={nutritionData}
+        previewUrl={previewUrl}
+        onSave={handleSaveAnalysis}
+        isSaving={isSaving}
+      />
+
+      {/* Food Detail Modal */}
+      <FoodDetailModal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        entry={selectedEntry}
+        onDelete={handleDeleteEntry}
+      />
     </Box>
   );
 };

@@ -4,12 +4,13 @@ This document describes how to run the complete SageCare application using Docke
 
 ## Architecture
 
-The application consists of 4 main services:
+The application consists of 5 main services:
 
 1. **sagecare-api** (Port 5000) - Node.js/Express backend API
 2. **sagecare-frontend** (Port 5173) - React frontend application
 3. **sagecare-consultation** (Port 3000) - React consultation app
 4. **sagecare-whisper-api** (Port 8001) - Python FastAPI Whisper transcription service
+5. **food-inference-api** (Port 5001) - Python/Flask ML service for food analysis
 
 **Note**: MongoDB is configured to use a cloud MongoDB cluster (not included in Docker setup)
 
@@ -35,15 +36,137 @@ The application consists of 4 main services:
    - Consultation App: http://localhost:3000
    - Backend API: http://localhost:5000
    - Whisper API: http://localhost:8001
+   - Food Inference API: http://localhost:5001
 
 ## Environment Variables
 
-Before running, update the environment variables in `docker-compose.yml`:
+The application uses the following environment variables with default values:
 
-- `JWT_SECRET`: Your JWT secret key
-- `EMAIL_USER`: Your Gmail address
-- `EMAIL_PASS`: Your Gmail app password
-- `MONGODB_URI`: MongoDB connection string
+### Database Configuration
+- `DB_CONNECTION_URL` - MongoDB connection string
+- `MONGODB_URI` - MongoDB connection string (for food-inference-api)
+
+### API Configuration
+- `JWT_SECRET` - JWT secret key for authentication
+- `PW_ENCRYPT_KEY` - Password encryption key
+- `EMAIL_USER` - Email service username
+- `EMAIL_PASSWORD` - Email service password
+
+### Frontend Configuration
+- `VITE_API_URL` - Backend API URL (default: http://sagecare-api:5000/api)
+- `VITE_FOOD_API_URL` - Food inference API URL (default: http://food-inference-api:5001)
+
+### Consultation App Configuration
+- `REACT_APP_API_URL` - Backend API URL (default: http://sagecare-api:5000)
+- `REACT_APP_STT_URL` - Whisper API WebSocket URL (default: ws://sagecare-whisper-api:8001)
+
+## Docker Hub Deployment
+
+### Building for Docker Hub
+
+1. **Build all images:**
+   ```bash
+   docker-compose build
+   ```
+
+2. **Tag images for Docker Hub:**
+   ```bash
+   docker tag sagecare-api your-dockerhub-username/sagecare-api:latest
+   docker tag sagecare-frontend your-dockerhub-username/sagecare-frontend:latest
+   docker tag sagecare-consultation your-dockerhub-username/sagecare-consultation:latest
+   docker tag sagecare-whisper-api your-dockerhub-username/sagecare-whisper-api:latest
+   docker tag food-inference-api your-dockerhub-username/food-inference-api:latest
+   ```
+
+3. **Push to Docker Hub:**
+   ```bash
+   docker push your-dockerhub-username/sagecare-api:latest
+   docker push your-dockerhub-username/sagecare-frontend:latest
+   docker push your-dockerhub-username/sagecare-consultation:latest
+   docker push your-dockerhub-username/sagecare-whisper-api:latest
+   docker push your-dockerhub-username/food-inference-api:latest
+   ```
+
+### Using from Docker Hub
+
+1. **Create a docker-compose.yml file:**
+   ```yaml
+   version: '3.8'
+   
+   services:
+     sagecare-api:
+       image: your-dockerhub-username/sagecare-api:latest
+       ports:
+         - "5000:5000"
+       environment:
+         - DB_CONNECTION_URL=your-mongodb-connection-string
+         - JWT_SECRET=your-jwt-secret
+         - PW_ENCRYPT_KEY=your-encryption-key
+         - EMAIL_USER=your-email
+         - EMAIL_PASSWORD=your-email-password
+       networks:
+         - sagecare-network
+   
+     sagecare-frontend:
+       image: your-dockerhub-username/sagecare-frontend:latest
+       ports:
+         - "5173:5173"
+       environment:
+         - VITE_API_URL=http://sagecare-api:5000/api
+         - VITE_FOOD_API_URL=http://food-inference-api:5001
+       depends_on:
+         - sagecare-api
+         - food-inference-api
+       networks:
+         - sagecare-network
+   
+     sagecare-consultation:
+       image: your-dockerhub-username/sagecare-consultation:latest
+       ports:
+         - "3000:3000"
+       environment:
+         - REACT_APP_API_URL=http://sagecare-api:5000
+         - REACT_APP_STT_URL=ws://sagecare-whisper-api:8001
+       depends_on:
+         - sagecare-api
+         - sagecare-whisper-api
+       networks:
+         - sagecare-network
+   
+     sagecare-whisper-api:
+       image: your-dockerhub-username/sagecare-whisper-api:latest
+       ports:
+         - "8001:8001"
+       environment:
+         - PYTHONUNBUFFERED=1
+       networks:
+         - sagecare-network
+   
+     food-inference-api:
+       image: your-dockerhub-username/food-inference-api:latest
+       ports:
+         - "5001:5001"
+       environment:
+         - MONGODB_URI=your-mongodb-connection-string
+       networks:
+         - sagecare-network
+       volumes:
+         - food_models:/app/models
+         - food_uploads:/app/uploads
+   
+   networks:
+     sagecare-network:
+       driver: bridge
+   
+   volumes:
+     food_models:
+     food_uploads:
+   ```
+
+2. **Run the application:**
+   ```bash
+   docker-compose up
+   ```
 
 ## Individual Service Management
 
@@ -90,72 +213,52 @@ npm start
 ```bash
 cd sage-care-frontend
 npm install
-npm start
+npm run dev
 ```
 
-### Consultation App:
+### Food Inference API:
 ```bash
-cd sagecare-consultation
-npm install
-npm start
-```
-
-### Whisper API:
-```bash
-cd sagecare-whisper-api
+cd food-inference-api
 pip install -r requirements.txt
-python start_api.py
+python app.py
 ```
 
 ## Troubleshooting
 
 ### Common Issues:
 
-1. **Port conflicts**: Ensure ports 3000, 5173, 5000, and 8001 are available
-2. **Memory issues**: The Whisper API requires significant memory. Ensure Docker has at least 4GB allocated
-3. **Network issues**: All services communicate via the `sagecare-network` bridge network
-4. **MongoDB connection**: Ensure your cloud MongoDB connection string is properly configured in the environment variables
-5. **Media access issues**: For network access, HTTPS is required. See `sagecare-consultation/HTTPS-SETUP.md` for setup instructions
+1. **Port conflicts**: Ensure ports 3000, 5000, 5001, 5173, and 8001 are available
+2. **MongoDB connection**: Verify your MongoDB connection string is correct
+3. **Environment variables**: Check that all required environment variables are set
+4. **Service dependencies**: Ensure all services are running before accessing the frontend
 
 ### Logs and Debugging:
-
 ```bash
-# Check container status
-docker-compose ps
-
 # View real-time logs
 docker-compose logs -f
 
+# View specific service logs
+docker-compose logs sagecare-api -f
+
 # Access container shell
 docker-compose exec sagecare-api sh
-docker-compose exec sagecare-whisper-api bash
 ```
 
 ## Production Deployment
 
 For production deployment:
 
-1. Update environment variables with production values
-2. Use proper secrets management
-3. Configure SSL/TLS certificates
-4. Set up proper monitoring and logging
-5. Use a reverse proxy (nginx) for load balancing
+1. **Set proper environment variables** for security
+2. **Use HTTPS** for all external communications
+3. **Configure proper logging** and monitoring
+4. **Set up health checks** for all services
+5. **Use Docker secrets** for sensitive information
+6. **Configure proper networking** and firewall rules
 
-## File Structure
+## Support
 
-```
-dev/web-app/
-├── docker-compose.yml
-├── sage-care-api/
-│   ├── Dockerfile
-│   └── .dockerignore
-├── sage-care-frontend/
-│   ├── Dockerfile
-│   └── .dockerignore
-├── sagecare-consultation/
-│   ├── Dockerfile
-│   └── .dockerignore
-└── sagecare-whisper-api/
-    ├── Dockerfile
-    └── .dockerignore
-``` 
+For issues and questions:
+- Check the logs: `docker-compose logs`
+- Verify environment variables are set correctly
+- Ensure all services are running: `docker-compose ps`
+- Check network connectivity between services 

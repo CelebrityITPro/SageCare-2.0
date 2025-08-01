@@ -1,5 +1,5 @@
 // Food inference API client
-const FOOD_INFERENCE_BASE_URL = 'http://localhost:5001';
+const FOOD_INFERENCE_BASE_URL = import.meta.env.VITE_FOOD_API_URL || 'http://food-inference-api:5001';
 
 export interface FoodAnalysisResult {
   success: boolean;

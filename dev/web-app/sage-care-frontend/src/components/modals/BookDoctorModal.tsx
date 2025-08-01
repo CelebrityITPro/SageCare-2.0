@@ -112,7 +112,7 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
 
   const fetchDoctors = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/doctors');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/doctors`);
       if (response.ok) {
         const data = await response.json();
         setDoctors(data || []);
@@ -166,8 +166,8 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
 
       if (!userId) {
         toast({
-          title: "Authentication Error",
-          description: "Please log in again",
+          title: "Error",
+          description: "User not found. Please log in again.",
           status: "error",
           duration: 3000,
         });
@@ -175,14 +175,12 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
       }
 
       // Convert local date and time to UTC ISO strings
-      const dateUtc = new Date(`${date}T00:00:00Z`).toISOString();
       const startTimeUtc = new Date(`${date}T${startTime}`).toISOString();
       const endTimeUtc = new Date(`${date}T${endTime}`).toISOString();
 
       const appointmentData = {
         doctor: selectedDoctor,
         patient: userId,
-        date: dateUtc,
         startTime: startTimeUtc,
         endTime: endTimeUtc,
         notes: notes,
@@ -192,7 +190,7 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
 
-      const response = await fetch('http://localhost:5000/api/appointments', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,23 +204,13 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
         const result = await response.json();
         toast({
           title: "Success",
-          description: "Appointment created successfully! Check your email for details.",
+          description: "Appointment created successfully! All participants have been notified.",
           status: "success",
           duration: 5000,
+          isClosable: true,
         });
-        onAppointmentCreated?.();
+        onAppointmentCreated();
         onClose();
-        // Reset form
-        setSelectedDoctor("");
-        setDate("");
-        setStartTime("");
-        setEndTime("");
-        setNotes("");
-        setThirdPartyEmail("");
-        setThirdPartyFirstName("");
-        setThirdPartyLastName("");
-        setStep(1);
-        setTimeError("");
       } else {
         const error = await response.json();
         toast({
@@ -230,15 +218,18 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
           description: error.error || "Failed to create appointment",
           status: "error",
           duration: 3000,
+          isClosable: true,
         });
+        setTimeError("");
       }
     } catch (error) {
       console.error('Failed to create appointment:', error);
       toast({
         title: "Error",
-        description: "Failed to create appointment",
+        description: "Failed to create appointment. Please try again.",
         status: "error",
         duration: 3000,
+        isClosable: true,
       });
     } finally {
       setLoading(false);

@@ -59,7 +59,7 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
   const fetchRecommendations = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/nutrition/recommendations/${userId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/recommendations/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setRecommendations(data.recommendations || []);
@@ -82,7 +82,7 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
 
   const handleFollowRecommendation = async (recommendationId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/nutrition/recommendations/${recommendationId}/follow`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/recommendations/${recommendationId}/follow`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -96,22 +96,25 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
         setRecommendations(prev => 
           prev.map(rec => 
             rec._id === recommendationId 
-              ? { ...rec, isFollowed: true, isIgnored: false }
+              ? { ...rec, isFollowed: true }
               : rec
           )
         );
         toast({
-          title: "Recommendation Followed",
-          description: "You've marked this recommendation as followed",
+          title: "Success",
+          description: "Recommendation marked as followed",
           status: "success",
           duration: 3000,
           isClosable: true,
         });
+      } else {
+        throw new Error('Failed to follow recommendation');
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Failed to follow recommendation:', error);
       toast({
         title: "Error",
-        description: "Failed to update recommendation",
+        description: "Failed to follow recommendation",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -121,7 +124,7 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
 
   const handleIgnoreRecommendation = async (recommendationId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/nutrition/recommendations/${recommendationId}/ignore`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/recommendations/${recommendationId}/ignore`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -135,22 +138,25 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
         setRecommendations(prev => 
           prev.map(rec => 
             rec._id === recommendationId 
-              ? { ...rec, isIgnored: true, isFollowed: false }
+              ? { ...rec, isIgnored: true }
               : rec
           )
         );
         toast({
-          title: "Recommendation Ignored",
-          description: "You've marked this recommendation as ignored",
-          status: "info",
+          title: "Success",
+          description: "Recommendation marked as ignored",
+          status: "success",
           duration: 3000,
           isClosable: true,
         });
+      } else {
+        throw new Error('Failed to ignore recommendation');
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Failed to ignore recommendation:', error);
       toast({
         title: "Error",
-        description: "Failed to update recommendation",
+        description: "Failed to ignore recommendation",
         status: "error",
         duration: 3000,
         isClosable: true,

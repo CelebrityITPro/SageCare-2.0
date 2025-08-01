@@ -118,7 +118,7 @@ const Nutrition = () => {
         setUserId(localStorageUserId);
       }
       
-      const response = await fetch(`http://localhost:5000/api/nutrition/history/${userId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/history/${userId}`);
       if (response.ok) {
         const data = await response.json();
         // Convert database entries to MealEntry format
@@ -160,7 +160,6 @@ const Nutrition = () => {
       
       // Convert to the format expected by the frontend
       const nutritionData = convertToNutritionData(analysisResult);
-      nutritionData.tips = analysisResult.tips;
       return nutritionData;
     } catch (error) {
       console.error('Food analysis error:', error);
@@ -212,7 +211,7 @@ const Nutrition = () => {
       formData.append('notes', notes);
       
       // Save to backend
-      const response = await fetch('http://localhost:5000/api/nutrition/analyze', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/analyze`, {
         method: 'POST',
         body: formData,
       });
@@ -231,31 +230,32 @@ const Nutrition = () => {
           mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
           imageUrl: `/api/nutrition/entry/${result.entryId}/image`,
           nutritionData: nutritionData,
-          notes: notes,
+          notes: notes
         };
         
         setMealEntries(prev => [newEntry, ...prev]);
         
-        // Reset form
-        setSelectedImage(null);
-        setPreviewUrl("");
-        setShowAnalysisModal(false);
-        setNutritionData(null);
-        
         toast({
-          title: "Analysis Saved",
-          description: "Your food analysis has been saved successfully! Recommendations have been generated.",
+          title: "Success",
+          description: "Food analysis saved successfully!",
           status: "success",
           duration: 3000,
           isClosable: true,
         });
+        
+        // Reset form
+        setSelectedImage(null);
+        setPreviewUrl('');
+        setNutritionData(null);
+        setShowAnalysisModal(false);
+        setShowUploadModal(false);
       } else {
         throw new Error(result.error || 'Failed to save analysis');
       }
     } catch (error) {
-      console.error('Save analysis error:', error);
+      console.error('Failed to save analysis:', error);
       toast({
-        title: "Save Failed",
+        title: "Error",
         description: "Failed to save analysis. Please try again.",
         status: "error",
         duration: 3000,

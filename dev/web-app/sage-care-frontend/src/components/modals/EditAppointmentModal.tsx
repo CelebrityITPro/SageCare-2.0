@@ -183,7 +183,7 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
 
-      const response = await fetch(`http://localhost:5000/api/appointments/${appointment._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/appointments/${appointment._id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

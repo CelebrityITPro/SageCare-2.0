@@ -59,7 +59,7 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
   const fetchRecommendations = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/recommendations/${userId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/nutrition/recommendations/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setRecommendations(data.recommendations || []);
@@ -82,7 +82,7 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
 
   const handleFollowRecommendation = async (recommendationId: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/recommendations/${recommendationId}/follow`, {
+              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/nutrition/recommendations/${recommendationId}/follow`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ userId }) => 
 
   const handleIgnoreRecommendation = async (recommendationId: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/recommendations/${recommendationId}/ignore`, {
+              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/nutrition/recommendations/${recommendationId}/ignore`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

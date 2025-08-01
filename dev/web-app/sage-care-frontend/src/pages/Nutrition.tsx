@@ -118,7 +118,7 @@ const Nutrition = () => {
         setUserId(localStorageUserId);
       }
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/history/${userId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/nutrition/history/${userId}`);
       if (response.ok) {
         const data = await response.json();
         // Convert database entries to MealEntry format
@@ -211,7 +211,7 @@ const Nutrition = () => {
       formData.append('notes', notes);
       
       // Save to backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/nutrition/analyze`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/nutrition/analyze`, {
         method: 'POST',
         body: formData,
       });

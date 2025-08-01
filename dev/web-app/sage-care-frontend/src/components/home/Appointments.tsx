@@ -78,7 +78,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
       }
       
       // Fetch appointments for the current user
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/appointments?patient=${userId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/appointments?patient=${userId}`);
       if (response.ok) {
         const data = await response.json();
         setAppointments(data.appointments || []);
@@ -86,7 +86,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
         // Fetch doctor details for each appointment
         const doctorIds = Array.from(new Set(data.appointments?.map((apt: Appointment) => apt.doctor) || []) as Set<string>);
         const doctorPromises = doctorIds.map(id => 
-          fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/doctors/${id}`).then(res => res.json())
+          fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/doctors/${id}`).then(res => res.json())
         );
       
         const doctorResults = await Promise.all(doctorPromises);
@@ -117,7 +117,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ refreshKey = 0 }) => {
       }
 
       // Track that the patient joined the meeting
-      const joinResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/appointments/${appointmentId}/join`, {
+      const joinResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/appointments/${appointmentId}/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

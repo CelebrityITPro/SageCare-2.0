@@ -34,8 +34,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:5000/api
-      - VITE_FOOD_API_URL=http://localhost:5001
+      - VITE_API_URL=http://sagecare-api:5000/api
+      - VITE_FOOD_API_URL=http://food-inference-api:5001
       - NODE_ENV=development
     volumes:
       - ./sage-care-frontend:/usr/src/app
@@ -56,8 +56,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://localhost:5000
-      - REACT_APP_STT_URL=ws://localhost:8001
+      - REACT_APP_API_URL=http://sagecare-api:5000
+      - REACT_APP_STT_URL=ws://sagecare-whisper-api:8001
     volumes:
       - ./sagecare-consultation:/app
       - /app/node_modules

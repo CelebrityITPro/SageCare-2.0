@@ -63,14 +63,14 @@ const VideoConsultation: React.FC = () => {
       setLoading(true);
       
       // Fetch appointment details
-      const appointmentResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/appointments/${appointmentId}`);
+      const appointmentResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/appointments/${appointmentId}`);
       if (appointmentResponse.ok) {
         const appointmentData = await appointmentResponse.json();
         setAppointment(appointmentData.appointment);
 
         // Fetch doctor details
         try {
-          const doctorResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/doctors/${appointmentData.appointment.doctor}`);
+          const doctorResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/doctors/${appointmentData.appointment.doctor}`);
           if (doctorResponse.ok) {
             const doctorData = await doctorResponse.json();
             setDoctor(doctorData);
@@ -81,7 +81,7 @@ const VideoConsultation: React.FC = () => {
 
         // Fetch patient details using public endpoint
         try {
-          const patientResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/users/public/${appointmentData.appointment.patient}`);
+          const patientResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/public/${appointmentData.appointment.patient}`);
           if (patientResponse.ok) {
             const patientData = await patientResponse.json();
             setPatient(patientData.user);

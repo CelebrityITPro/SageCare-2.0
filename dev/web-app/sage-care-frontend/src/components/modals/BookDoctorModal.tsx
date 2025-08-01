@@ -112,7 +112,7 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
 
   const fetchDoctors = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/doctors`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/doctors`);
       if (response.ok) {
         const data = await response.json();
         setDoctors(data || []);
@@ -190,7 +190,7 @@ const BookDoctorModal: React.FC<BookDoctorModalProps> = ({
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://sagecare-api:5000/api'}/appointments`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

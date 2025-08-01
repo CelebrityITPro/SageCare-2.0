@@ -172,7 +172,7 @@ router.post("/analyze", upload.single("image"), async (req, res) => {
     const formData = new FormData();
     formData.append('file', req.file.buffer, req.file.originalname);
     
-    const foodInferenceResponse = await fetch('http://food-inference-api:5001/analyze-food-image', {
+    const foodInferenceResponse = await fetch('http://localhost:5001/analyze-food-image', {
       method: 'POST',
       body: formData
     });

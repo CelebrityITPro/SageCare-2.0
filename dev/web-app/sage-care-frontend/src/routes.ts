@@ -6,5 +6,6 @@ export const ROUTES = {
   VIDEO_CONSULTATION: "/consultation/:appointmentId",
   APPOINTMENTS: "appointments",
   NUTRITION: "nutrition",
+  AI_ASSISTANT: "ai-assistant",
   SETTINGS: "settings",
 };

@@ -10,6 +10,7 @@ import VideoConsultation from "./pages/VideoConsultation";
 import UserProfile from "./pages/UserProfile";
 import Appointments from "./pages/Appointments";
 import Nutrition from "./pages/Nutrition";
+import AIAssistant from "./pages/AIAssistant";
 import Settings from "./pages/Settings";
 import SessionManager from "./SessionManager";
 
@@ -33,6 +34,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path={ROUTES.APPOINTMENTS} element={<Appointments />} />
           <Route path={ROUTES.NUTRITION} element={<Nutrition />} />
+          <Route path={ROUTES.AI_ASSISTANT} element={<AIAssistant />} />
           <Route path={ROUTES.SETTINGS} element={<Settings />} />
         </Route>
 

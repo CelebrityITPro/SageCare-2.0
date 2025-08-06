@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageCare 2.0 - Architecture Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 3em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #e0e0e0;
+        }
+        .nav-tab {
+            padding: 15px 30px;
+            margin: 0 10px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .nav-tab:hover {
+            background: #5a6fd8;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            text-align: center;
+        }
+        .diagram-container {
+            margin: 40px 0;
+            padding: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #f8f9fa, #ffffff);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        .mermaid {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .description {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 5px solid #2196f3;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .summary-box {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 40px 0;
+            border-left: 5px solid #4caf50;
+        }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .tech-card {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff9800;
+        }
+        .tech-card h4 {
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ SageCare 2.0 - Architecture Diagrams</h1>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('high-level')">🏗️ High-Level Architecture</button>
+            <button class="nav-tab" onclick="showTab('detailed')">🔧 Detailed Architecture</button>
+        </div>
+
+        <!-- High-Level Architecture Tab -->
+        <div id="high-level" class="tab-content active">
+            <h2>🏗️ System Overview</h2>
+            <div class="description">
+                <strong>Overview:</strong> High-level view of SageCare 2.0's main components and their interactions, showing the overall system architecture.
+            </div>
+            <div class="diagram-container">
+                <div class="mermaid">
+graph TB
+    subgraph "Frontend Layer"
+        F1[📱 React App<br/>User Interface]
+        F2[🎨 Material-UI<br/>Components]
+        F3[📱 Mobile-First<br/>Responsive Design]
+    end
+    
+    subgraph "Backend Layer"
+        B1[🔌 Node.js API<br/>Express Server]
+        B2[🔐 JWT Authentication<br/>User Management]
+        B3[📧 Email Service<br/>Notifications]
+    end
+    
+    subgraph "Database Layer"
+        D1[🗄️ MongoDB<br/>User Data]
+        D2[📊 Health Records<br/>Appointments]
+        D3[🍎 Nutrition Data<br/>Food History]
+    end
+    
+    subgraph "Video Consultation"
+        V1[📹 WebRTC<br/>Video Calls]
+        V2[🎤 Real-time Audio<br/>Streaming]
+        V3[📡 Signaling Server<br/>Connection Management]
+    end
+    
+    subgraph "AI/ML Services"
+        A1[🤖 AI Medical Assistant<br/>LLM Integration]
+        A2[🍎 Food Recognition<br/>MobileNet Model]
+        A3[🎤 Speech-to-Text<br/>Whisper API]
+        A4[🔍 Symptom Analysis<br/>Medical Knowledge Base]
+    end
+    
+    F1 --> B1
+    F2 --> B1
+    F3 --> B1
+    
+    B1 --> D1
+    B1 --> D2
+    B1 --> D3
+    
+    B1 --> V1
+    V1 --> V2
+    V2 --> A3
+    
+    B1 --> A1
+    B1 --> A2
+    B1 --> A3
+    B1 --> A4
+    
+    V2 -.->|Real-time Audio| A3
+    A1 -.->|Health Chat| F1
+    A2 -.->|Nutrition Analysis| F1
+    A3 -.->|Live Transcription| V1
+    A4 -.->|Symptom Assessment| F1
+    
+    classDef frontend fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef backend fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef database fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef video fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef ai fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    
+    class F1,F2,F3 frontend
+    class B1,B2,B3 backend
+    class D1,D2,D3 database
+    class V1,V2,V3 video
+    class A1,A2,A3,A4 ai
+                </div>
+            </div>
+
+            <h2>🔄 Data Flow Architecture</h2>
+            <div class="description">
+                <strong>Overview:</strong> How data flows through the system from user interface to AI/ML services and back.
+            </div>
+            <div class="diagram-container">
+                <div class="mermaid">
+graph LR
+    subgraph "User Interface"
+        U1[👤 Patient]
+        U2[👨‍⚕️ Doctor]
+        U3[📱 Mobile App]
+    end
+    
+    subgraph "Application Layer"
+        A1[🔌 API Gateway<br/>Request Routing]
+        A2[🔐 Auth Service<br/>JWT Validation]
+        A3[📊 Business Logic<br/>Health Management]
+    end
+    
+    subgraph "Data Layer"
+        D1[🗄️ MongoDB<br/>Primary Database]
+        D2[📁 File Storage<br/>Images & Documents]
+        D3[💾 Cache Layer<br/>Redis/Session]
+    end
+    
+    subgraph "External Services"
+        E1[📧 Email Service<br/>SMTP/NodeMailer]
+        E2[💳 Payment Gateway<br/>Stripe/PayPal]
+        E3[📱 Push Notifications<br/>FCM/APNS]
+    end
+    
+    subgraph "AI/ML Pipeline"
+        M1[🤖 LLM Service<br/>AI Medical Assistant]
+        M2[🍎 Food Analysis<br/>MobileNet Model]
+        M3[🎤 Speech Processing<br/>Whisper API]
+        M4[🔍 Medical NLP<br/>Symptom Analysis]
+    end
+    
+    U1 --> A1
+    U2 --> A1
+    U3 --> A1
+    
+    A1 --> A2
+    A2 --> A3
+    
+    A3 --> D1
+    A3 --> D2
+    A3 --> D3
+    
+    A3 --> E1
+    A3 --> E2
+    A3 --> E3
+    
+    A3 --> M1
+    A3 --> M2
+    A3 --> M3
+    A3 --> M4
+    
+    M1 -.->|Health Insights| U1
+    M2 -.->|Nutrition Data| U1
+    M3 -.->|Transcription| U2
+    M4 -.->|Assessment| U1
+                </div>
+            </div>
+
+            <h2>🛡️ Security Architecture</h2>
+            <div class="description">
+                <strong>Overview:</strong> Multi-layered security approach ensuring HIPAA compliance and data protection.
+            </div>
+            <div class="diagram-container">
+                <div class="mermaid">
+graph TD
+    subgraph "Client Security"
+        C1[🔐 HTTPS/TLS<br/>Encrypted Communication]
+        C2[🛡️ Input Validation<br/>XSS Prevention]
+        C3[🔒 Local Storage<br/>Secure Token Management]
+    end
+    
+    subgraph "Network Security"
+        N1[🌐 API Gateway<br/>Rate Limiting]
+        N2[🛡️ CORS Policy<br/>Cross-Origin Control]
+        N3[🔐 SSL/TLS<br/>End-to-End Encryption]
+    end
+    
+    subgraph "Application Security"
+        A1[🔑 JWT Tokens<br/>Stateless Authentication]
+        A2[🛡️ Input Sanitization<br/>SQL Injection Prevention]
+        A3[🔒 Role-Based Access<br/>RBAC Implementation]
+    end
+    
+    subgraph "Data Security"
+        D1[🔐 Database Encryption<br/>At-Rest Protection]
+        D2[🛡️ HIPAA Compliance<br/>Healthcare Standards]
+        D3[🔒 Audit Logging<br/>Access Tracking]
+    end
+    
+    C1 --> N1
+    C2 --> N2
+    C3 --> N3
+    
+    N1 --> A1
+    N2 --> A2
+    N3 --> A3
+    
+    A1 --> D1
+    A2 --> D2
+    A3 --> D3
+                </div>
+            </div>
+
+            <div class="summary-box">
+                <h3>📋 High-Level Architecture Summary</h3>
+                
+                <div class="tech-grid">
+                    <div class="tech-card">
+                        <h4>📱 Frontend</h4>
+                        <p>React-based responsive web application with Material-UI components</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>🔌 Backend</h4>
+                        <p>Node.js API with Express framework and JWT authentication</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>🗄️ Database</h4>
+                        <p>MongoDB for data persistence with health records and nutrition data</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>📹 Video</h4>
+                        <p>WebRTC for real-time consultations with signaling server</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>🤖 AI/ML</h4>
+                        <p>Python-based services for medical assistant and food recognition</p>
+                    </div>
+                </div>
+                
+                <h4>🔄 Key Interactions</h4>
+                <ul>
+                    <li><strong>Frontend ↔ Backend:</strong> RESTful API communication</li>
+                    <li><strong>Backend ↔ Database:</strong> Data persistence and retrieval</li>
+                    <li><strong>Video ↔ AI:</strong> Real-time audio streaming to speech processing</li>
+                    <li><strong>AI ↔ Frontend:</strong> Intelligent insights and recommendations</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Detailed Architecture Tab -->
+        <div id="detailed" class="tab-content">
+            <h2>🔧 Detailed System Architecture</h2>
+            <div class="description">
+                <strong>Overview:</strong> Comprehensive technical architecture showing specific technologies, protocols, and implementation details.
+            </div>
+            <div class="diagram-container">
+                <div class="mermaid">
+graph TB
+    subgraph "Client Layer"
+        C1[🌐 Web Browser<br/>Chrome/Firefox/Safari]
+        C2[📱 Mobile App<br/>React Native/PWA]
+        C3[💻 Desktop App<br/>Electron]
+    end
+    
+    subgraph "Frontend Services"
+        F1[⚛️ React 18<br/>Functional Components]
+        F2[🎨 Material-UI v5<br/>Design System]
+        F3[📱 Responsive Design<br/>Mobile-First]
+        F4[🔄 State Management<br/>React Query + Context]
+        F5[🧭 Routing<br/>React Router v6]
+        F6[📊 Charts<br/>Chart.js/Recharts]
+    end
+    
+    subgraph "API Gateway"
+        G1[🌐 Nginx<br/>Reverse Proxy]
+        G2[🛡️ Rate Limiting<br/>100 req/min]
+        G3[🔐 SSL Termination<br/>TLS 1.3]
+        G4[📊 Load Balancing<br/>Round Robin]
+    end
+    
+    subgraph "Backend Services"
+        B1[🔌 Express.js<br/>REST API Server]
+        B2[🔐 JWT Authentication<br/>jsonwebtoken]
+        B3[📧 Email Service<br/>Nodemailer + SMTP]
+        B4[📁 File Upload<br/>Multer + Cloud Storage]
+        B5[🔍 Input Validation<br/>Joi/Yup]
+        B6[📝 Logging<br/>Winston + Morgan]
+    end
+    
+    subgraph "Database Layer"
+        D1[🗄️ MongoDB Atlas<br/>Cloud Database]
+        D2[📊 Mongoose ODM<br/>Schema Management]
+        D3[💾 Redis Cache<br/>Session Storage]
+        D4[📁 AWS S3<br/>File Storage]
+    end
+    
+    subgraph "Video Consultation"
+        V1[📹 WebRTC<br/>Peer-to-Peer]
+        V2[🎤 MediaStream API<br/>Audio/Video Capture]
+        V3[📡 Socket.io<br/>Signaling Server]
+        V4[🎬 Media Server<br/>TURN/STUN]
+    end
+    
+    subgraph "AI/ML Services"
+        A1[🤖 OpenAI GPT-4<br/>Medical Assistant]
+        A2[🍎 TensorFlow.js<br/>Food Recognition]
+        A3[🎤 OpenAI Whisper<br/>Speech-to-Text]
+        A4[🔍 Medical NLP<br/>Symptom Analysis]
+        A5[📊 Health Analytics<br/>ML Insights]
+    end
+    
+    subgraph "External APIs"
+        E1[📧 Email Provider<br/>SendGrid/AWS SES]
+        E2[💳 Payment Gateway<br/>Stripe/PayPal]
+        E3[📱 Push Notifications<br/>Firebase FCM]
+        E4[🗺️ Maps API<br/>Google Maps]
+    end
+    
+    C1 --> G1
+    C2 --> G1
+    C3 --> G1
+    
+    G1 --> G2
+    G2 --> G3
+    G3 --> G4
+    
+    G4 --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> B4
+    B4 --> B5
+    B5 --> B6
+    
+    B1 --> D1
+    B1 --> D2
+    B1 --> D3
+    B1 --> D4
+    
+    B1 --> V1
+    V1 --> V2
+    V2 --> V3
+    V3 --> V4
+    
+    B1 --> A1
+    B1 --> A2
+    B1 --> A3
+    B1 --> A4
+    B1 --> A5
+    
+    B1 --> E1
+    B1 --> E2
+    B1 --> E3
+    B1 --> E4
+    
+    V2 -.->|Real-time Audio| A3
+    A1 -.->|Health Chat| F1
+    A2 -.->|Nutrition Analysis| F1
+    A3 -.->|Live Transcription| V1
+    A4 -.->|Symptom Assessment| F1
+    A5 -.->|Health Insights| F1
+    
+    classDef client fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef frontend fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef gateway fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef backend fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef database fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef video fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    classDef ai fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    classDef external fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    
+    class C1,C2,C3 client
+    class F1,F2,F3,F4,F5,F6 frontend
+    class G1,G2,G3,G4 gateway
+    class B1,B2,B3,B4,B5,B6 backend
+    class D1,D2,D3,D4 database
+    class V1,V2,V3,V4 video
+    class A1,A2,A3,A4,A5 ai
+    class E1,E2,E3,E4 external
+                </div>
+            </div>
+
+            <h2>📊 Database Schema Design</h2>
+            <div class="description">
+                <strong>Overview:</strong> Detailed database schema showing collections, relationships, and data structure for healthcare management.
+            </div>
+            <div class="diagram-container">
+                <div class="mermaid">
+graph TD
+    subgraph "User Management"
+        U1[👤 Users Collection<br/>_id, email, password, profile]
+        U2[🔐 Sessions Collection<br/>_id, userId, token, expires]
+        U3[📊 User Health Profile<br/>_id, userId, conditions, allergies]
+    end
+    
+    subgraph "Appointment System"
+        A1[📅 Appointments Collection<br/>_id, patientId, doctorId, date, status]
+        A2[👨‍⚕️ Doctors Collection<br/>_id, name, specialty, availability]
+        A3[🏥 Clinics Collection<br/>_id, name, location, services]
+    end
+    
+    subgraph "Health Data"
+        H1[🍎 Nutrition Entries<br/>_id, userId, food, calories, date]
+        H2[📊 Health Metrics<br/>_id, userId, weight, bloodPressure, date]
+        H3[💊 Medications<br/>_id, userId, name, dosage, schedule]
+    end
+    
+    subgraph "AI/ML Data"
+        M1[🤖 Chat History<br/>_id, userId, messages, timestamp]
+        M2[🔍 Symptom Records<br/>_id, userId, symptoms, assessment]
+        M3[📈 Health Insights<br/>_id, userId, insights, recommendations]
+    end
+    
+    subgraph "Video Consultation"
+        V1[🎥 Consultation Records<br/>_id, appointmentId, duration, notes]
+        V2[🎤 Transcription Data<br/>_id, consultationId, text, timestamp]
+        V3[📝 Medical Notes<br/>_id, consultationId, notes, prescriptions]
+    end
+    
+    U1 --> A1
+    U1 --> H1
+    U1 --> M1
+    A1 --> V1
+    V1 --> V2
+    V1 --> V3
+    A1 --> A2
+    A2 --> A3
+                </div>
+            </div>
+
+            <h2>🔧 API Endpoints Architecture</h2>
+            <div class="description">
+                <strong>Overview:</strong> Complete API structure showing all endpoints for authentication, user management, appointments, video consultations, and AI services.
+            </div>
+            <div class="diagram-container">
+                <div class="mermaid">
+graph LR
+    subgraph "Authentication APIs"
+        A1[POST /api/auth/register<br/>User Registration]
+        A2[POST /api/auth/login<br/>User Login]
+        A3[POST /api/auth/logout<br/>User Logout]
+        A4[POST /api/auth/refresh<br/>Token Refresh]
+    end
+    
+    subgraph "User Management APIs"
+        U1[GET /api/users/profile<br/>Get User Profile]
+        U2[PUT /api/users/profile<br/>Update Profile]
+        U3[GET /api/users/health<br/>Get Health Data]
+        U4[POST /api/users/health<br/>Update Health Data]
+    end
+    
+    subgraph "Appointment APIs"
+        P1[GET /api/appointments<br/>List Appointments]
+        P2[POST /api/appointments<br/>Create Appointment]
+        P3[PUT /api/appointments/:id<br/>Update Appointment]
+        P4[DELETE /api/appointments/:id<br/>Cancel Appointment]
+    end
+    
+    subgraph "Video Consultation APIs"
+        V1[POST /api/consultations/join<br/>Join Consultation]
+        V2[GET /api/consultations/:id<br/>Get Consultation]
+        V3[POST /api/consultations/transcribe<br/>Save Transcription]
+        V4[POST /api/consultations/notes<br/>Save Notes]
+    end
+    
+    subgraph "AI/ML APIs"
+        M1[POST /api/ai/chat<br/>AI Medical Assistant]
+        M2[POST /api/ai/food-analysis<br/>Food Recognition]
+        M3[POST /api/ai/symptom-check<br/>Symptom Analysis]
+        M4[GET /api/ai/insights<br/>Health Insights]
+    end
+    
+    subgraph "Nutrition APIs"
+        N1[POST /api/nutrition/analyze<br/>Food Analysis]
+        N2[GET /api/nutrition/history<br/>Nutrition History]
+        N3[POST /api/nutrition/track<br/>Track Nutrition]
+        N4[GET /api/nutrition/recommendations<br/>Get Recommendations]
+    end
+    
+    A1 --> U1
+    A2 --> U1
+    U1 --> P1
+    P1 --> V1
+    V1 --> M1
+    M1 --> N1
+                </div>
+            </div>
+
+            <div class="summary-box">
+                <h3>📋 Detailed Architecture Summary</h3>
+                
+                <div class="tech-grid">
+                    <div class="tech-card">
+                        <h4>⚛️ Frontend Stack</h4>
+                        <p>React 18, Material-UI v5, React Query, React Router v6, Chart.js</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>🔌 Backend Stack</h4>
+                        <p>Node.js, Express.js, JWT, Nodemailer, Multer, Winston</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>🗄️ Database Stack</h4>
+                        <p>MongoDB Atlas, Mongoose ODM, Redis Cache, AWS S3</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>📹 Video Stack</h4>
+                        <p>WebRTC, Socket.io, MediaStream API, TURN/STUN servers</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>🤖 AI/ML Stack</h4>
+                        <p>OpenAI GPT-4, TensorFlow.js, OpenAI Whisper, Medical NLP</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>🛡️ Security Stack</h4>
+                        <p>HTTPS/TLS 1.3, HIPAA compliance, JWT RS256, Input validation</p>
+                    </div>
+                </div>
+                
+                <h4>🔧 Implementation Details</h4>
+                <ul>
+                    <li><strong>Authentication:</strong> JWT with RS256, refresh token rotation</li>
+                    <li><strong>Security:</strong> HTTPS/TLS 1.3, HIPAA compliance, input validation</li>
+                    <li><strong>Performance:</strong> Redis caching, database indexing, CDN</li>
+                    <li><strong>Scalability:</strong> Load balancing, horizontal scaling, microservices</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html> 

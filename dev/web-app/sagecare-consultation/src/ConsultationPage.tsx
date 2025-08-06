@@ -66,6 +66,7 @@ function ConsultationPage() {
   const [displayName, setDisplayName] = useState('');
   const [nameModalOpen, setNameModalOpen] = useState(true);
   const [participants, setParticipants] = useState<string[]>([]);
+  const [participantNames, setParticipantNames] = useState<{[key: string]: string}>({});
   const [notifications, setNotifications] = useState<{ type: string; name: string }[]>([]);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [whisperConnected, setWhisperConnected] = useState(false);
@@ -489,14 +490,36 @@ function ConsultationPage() {
     // 1. Connect to signaling server
     let socket: ReturnType<typeof io>;
     try {
+      console.log('🔌 Attempting to connect to signaling server:', SIGNALING_SERVER_URL);
       socket = io(SIGNALING_SERVER_URL);
       socketRef.current = socket;
+      
+      // Add connection event handlers for debugging
+      socket.on('connect', () => {
+        console.log('✅ Socket.io connected successfully');
+      });
+
+      socket.on('connect_error', (error) => {
+        console.error('❌ Socket.io connection failed:', error);
+        setError('Failed to connect to signaling server: ' + error.message);
+      });
+
+      socket.on('disconnect', (reason) => {
+        console.log('🔌 Socket.io disconnected:', reason);
+      });
+
+      socket.on('error', (error) => {
+        console.error('❌ Socket.io error:', error);
+      });
+      
     } catch (err) {
+      console.error('❌ Failed to create Socket.io connection:', err);
       setError('Failed to connect to signaling server.');
       return;
     }
 
     // 2. Join the signaling room
+    console.log('📡 Joining signaling room:', meetingId, 'as:', displayName);
     socket.emit('join', { meetingId, name: displayName });
 
     // 3. Set up peer connection
@@ -514,6 +537,7 @@ function ConsultationPage() {
     // 4. Handle ICE candidates
     pc.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log('📡 Sending ICE candidate...');
         socket.emit('signal', {
           meetingId,
           data: { type: 'ice-candidate', candidate: event.candidate },
@@ -523,10 +547,34 @@ function ConsultationPage() {
 
     // 5. Handle remote stream
     pc.ontrack = (event) => {
+      console.log('📹 Remote stream received!');
+      console.log('📹 Remote video ref exists:', !!remoteVideoRef.current);
+      console.log('📹 Remote stream tracks:', event.streams[0].getTracks().map(t => t.kind));
+      
       if (remoteVideoRef.current) {
         (remoteVideoRef.current).srcObject = event.streams[0];
+        console.log('📹 Remote video stream set');
+        
+        // Force the remote video to load and play
+        (remoteVideoRef.current).load();
+        (remoteVideoRef.current).play().then(() => {
+          console.log('📹 Remote video play successful');
+        }).catch(e => {
+          console.error('📹 Remote video play error:', e);
+        });
+      } else {
+        console.error('📹 Remote video ref is null!');
       }
       remoteStreamRef.current = event.streams[0];
+    };
+
+    // Add peer connection state change debugging
+    pc.onconnectionstatechange = () => {
+      console.log('🔗 Peer connection state changed:', pc.connectionState);
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('🧊 ICE connection state changed:', pc.iceConnectionState);
     };
 
     // 6. Get local media
@@ -644,48 +692,75 @@ function ConsultationPage() {
           pc.addTrack(track, stream);
         });
 
+        // Signal that we're ready to start WebRTC negotiation
+        console.log('📡 Signaling ready for WebRTC negotiation...');
+        socket.emit('signal', {
+          meetingId,
+          data: { type: 'ready' },
+        });
+
         // 7. Handle signaling
         socket.on('signal', async (data: any) => {
+          console.log('📡 Received signal:', data.type);
           try {
             if (data.type === 'offer') {
+              console.log('📡 Processing offer...');
               await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
               const answer = await pc.createAnswer();
               await pc.setLocalDescription(answer);
+              console.log('📡 Sending answer...');
               socket.emit('signal', {
                 meetingId,
                 data: { type: 'answer', answer },
               });
             } else if (data.type === 'answer') {
+              console.log('📡 Processing answer...');
               await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
             } else if (data.type === 'ice-candidate') {
+              console.log('📡 Processing ICE candidate...');
               try {
                 await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
               } catch (e) {
+                console.error('❌ Error adding ICE candidate:', e);
                 setError('Error adding received ICE candidate.');
               }
             }
           } catch (err) {
+            console.error('❌ WebRTC signaling error:', err);
             setError('WebRTC signaling error: ' + (err instanceof Error ? err.message : String(err)));
           }
         });
 
         // 8. If caller, create offer
         socket.once('ready', async () => {
+          console.log('📡 Received ready signal, creating offer...');
           try {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
+            console.log('📡 Sending offer...');
             socket.emit('signal', {
               meetingId,
               data: { type: 'offer', offer },
             });
           } catch (err) {
+            console.error('❌ Failed to create offer:', err);
             setError('Failed to create offer: ' + (err instanceof Error ? err.message : String(err)));
           }
         });
 
         // 9. Handle participant updates
         socket.on('participants', (participants: string[]) => {
+          console.log('📡 Participants updated:', participants);
           setParticipants(participants);
+          
+          // Create a mapping of participant names
+          const namesMap: {[key: string]: string} = {};
+          participants.forEach(name => {
+            if (name !== displayName) {
+              namesMap[name] = name;
+            }
+          });
+          setParticipantNames(namesMap);
         });
 
         socket.on('user-joined', (name: string) => {
@@ -755,6 +830,25 @@ function ConsultationPage() {
       }
     }
   }, [loading]);
+
+  // Effect to ensure remote video element is properly set up
+  useEffect(() => {
+    if (remoteStreamRef.current && remoteVideoRef.current) {
+      console.log('Remote stream available, ensuring video element is set up...');
+      const video = remoteVideoRef.current;
+      const stream = remoteStreamRef.current;
+      
+      if (!video.srcObject) {
+        video.srcObject = stream;
+        video.load();
+        video.play().then(() => {
+          console.log('Remote video play successful from useEffect');
+        }).catch(e => {
+          console.error('Remote video play error from useEffect:', e);
+        });
+      }
+    }
+  }, [remoteStreamRef.current]);
 
   useEffect(() => {
     if (!meetingId) return;
@@ -1142,17 +1236,18 @@ function ConsultationPage() {
             </div>
            ) : (
              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, justifyContent: 'center', margin: '32px 0', maxWidth: '100%' }}>
-               {/* Video Container with 16:9 aspect ratio */}
+               {/* Video Container with side-by-side layout */}
                <div style={{ 
                  display: 'flex', 
                  gap: 16, 
                  justifyContent: 'center', 
-                 flexWrap: 'wrap',
+                 alignItems: 'center',
+                 flexDirection: participants.length > 1 ? 'row' : 'column',
                  maxWidth: '100%'
                }}>
                  {/* Local Video */}
                  <div style={{ 
-                   width: 'min(640px, 45vw)', 
+                   width: participants.length > 1 ? 'min(480px, 40vw)' : 'min(640px, 45vw)', 
                    aspectRatio: '16/9',
                    position: 'relative',
                    borderRadius: 12,
@@ -1193,7 +1288,7 @@ function ConsultationPage() {
                      fontSize: 14, 
                      backdropFilter: 'blur(4px)' 
                    }}>
-                     You
+                     {displayName}
                    </span>
                    
                    {/* Video Overlay Captions */}
@@ -1219,64 +1314,63 @@ function ConsultationPage() {
                  </div>
                  
                  {/* Remote Video */}
-                 {participants.length > 1 && (
-                   <div style={{ 
-                     width: 'min(640px, 45vw)', 
-                     aspectRatio: '16/9',
-                     position: 'relative',
-                     borderRadius: 12,
-                     overflow: 'hidden',
-                     boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                     background: '#000'
+                 <div style={{ 
+                   width: 'min(480px, 40vw)', 
+                   aspectRatio: '16/9',
+                   position: 'relative',
+                   borderRadius: 12,
+                   overflow: 'hidden',
+                   boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                   background: '#000',
+                   display: participants.length > 1 ? 'block' : 'none'
+                 }}>
+                   <video
+                     ref={remoteVideoRef}
+                     autoPlay
+                     playsInline
+                     style={{ 
+                       width: '100%', 
+                       height: '100%', 
+                       objectFit: 'cover',
+                       borderRadius: 12
+                     }}
+                   />
+                   <span style={{ 
+                     position: 'absolute', 
+                     left: 16, 
+                     bottom: 16, 
+                     color: '#fff', 
+                     fontWeight: 600, 
+                     background: 'rgba(0,0,0,0.7)', 
+                     padding: '6px 12px', 
+                     borderRadius: 6, 
+                     fontSize: 14, 
+                     backdropFilter: 'blur(4px)' 
                    }}>
-                     <video
-                       ref={remoteVideoRef}
-                       autoPlay
-                       playsInline
-                       style={{ 
-                         width: '100%', 
-                         height: '100%', 
-                         objectFit: 'cover',
-                         borderRadius: 12
-                       }}
-                     />
-                     <span style={{ 
+                     {participants.find(p => p !== displayName) || 'Remote'}
+                   </span>
+                   
+                   {/* Video Overlay Captions for Remote Video */}
+                   {captionsEnabled && transcriptEntries.length > 0 && (
+                     <div style={{ 
                        position: 'absolute', 
+                       bottom: 50, 
                        left: 16, 
-                       bottom: 16, 
+                       right: 16, 
+                       background: 'rgba(0,0,0,0.8)', 
                        color: '#fff', 
-                       fontWeight: 600, 
-                       background: 'rgba(0,0,0,0.7)', 
-                       padding: '6px 12px', 
+                       padding: '8px 12px', 
                        borderRadius: 6, 
                        fontSize: 14, 
-                       backdropFilter: 'blur(4px)' 
+                       lineHeight: 1.3,
+                       backdropFilter: 'blur(4px)',
+                       maxHeight: '60px',
+                       overflow: 'hidden'
                      }}>
-                       Remote
-                     </span>
-                     
-                     {/* Video Overlay Captions for Remote Video */}
-                     {captionsEnabled && transcriptEntries.length > 0 && (
-                       <div style={{ 
-                         position: 'absolute', 
-                         bottom: 50, 
-                         left: 16, 
-                         right: 16, 
-                         background: 'rgba(0,0,0,0.8)', 
-                         color: '#fff', 
-                         padding: '8px 12px', 
-                         borderRadius: 6, 
-                         fontSize: 14, 
-                         lineHeight: 1.3,
-                         backdropFilter: 'blur(4px)',
-                         maxHeight: '60px',
-                         overflow: 'hidden'
-                       }}>
-                         {transcriptEntries.slice(-1)[0]?.text || ''}
-                       </div>
-                     )}
-                   </div>
-                 )}
+                       {transcriptEntries.slice(-1)[0]?.text || ''}
+                     </div>
+                   )}
+                 </div>
                </div>
              </div>
            )}

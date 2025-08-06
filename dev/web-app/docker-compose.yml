@@ -36,6 +36,7 @@ services:
     environment:
       - VITE_API_URL=http://sagecare-api:5000/api
       - VITE_FOOD_API_URL=http://food-inference-api:5001
+      - VITE_AI_DIAGNOSIS_API_URL=http://ai-diagnosis-api:5002
       - NODE_ENV=development
     volumes:
       - ./sage-care-frontend:/usr/src/app
@@ -101,6 +102,27 @@ services:
       - ./food-inference-api:/app
       - food_models:/app/models
       - food_uploads:/app/uploads
+    networks:
+      - sagecare-network
+
+  # AI Diagnosis API (Python/Grok)
+  ai-diagnosis-api:
+    build:
+      context: ./ai-diagnosis-api
+      dockerfile: Dockerfile
+    container_name: ai-diagnosis-api
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_APP=app.py
+      - PYTHONPATH=/app
+      - PORT=5002
+      - GROK_API_URL=https://api.x.ai/v1
+      - GROK_API_KEY=${GROK_API_KEY}
+      - SAGECARE_API_URL=http://sagecare-api:5000/api
+    volumes:
+      - ./ai-diagnosis-api:/app
     networks:
       - sagecare-network
 

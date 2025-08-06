@@ -7,6 +7,7 @@ const authRoute = require("./routes/auth");
 const doctorRoute = require("./routes/doctor");
 const appointmentRoute = require("./routes/appointment");
 const nutritionRoute = require("./routes/nutrition");
+const diagnosisHistoryRoute = require("./routes/diagnosis-history");
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -55,6 +56,7 @@ app.use("/api/users", userRoute);
 app.use("/api/doctors", doctorRoute);
 app.use("/api/appointments", appointmentRoute);
 app.use("/api/nutrition", nutritionRoute);
+app.use("/api/diagnosis-history", diagnosisHistoryRoute);
 app.use("/uploads", express.static("uploads"));
 // app.use("/api/cart", cartRoute);
 

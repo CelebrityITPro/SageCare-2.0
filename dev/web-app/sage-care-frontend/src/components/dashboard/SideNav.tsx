@@ -2,12 +2,13 @@ import { Box, Image, Text, VStack, HStack, Icon, Button, Tooltip } from "@chakra
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ROUTES } from "../../routes";
-import { FiHome, FiCalendar, FiMessageSquare, FiUser, FiChevronLeft, FiChevronRight, FiHeart } from "react-icons/fi";
+import { FiHome, FiCalendar, FiMessageSquare, FiUser, FiChevronLeft, FiChevronRight, FiHeart, FiCpu } from "react-icons/fi";
 
 const NavItems = [
   { title: "Home", icon: FiHome, path: ROUTES.HOME },
   { title: "Appointments", icon: FiCalendar, path: ROUTES.APPOINTMENTS },
   { title: "Your Nutrition", icon: FiHeart, path: ROUTES.NUTRITION },
+  { title: "AI Assistant", icon: FiCpu, path: ROUTES.AI_ASSISTANT },
   { title: "Messages", icon: FiMessageSquare, path: "/messages" },
 ];
 

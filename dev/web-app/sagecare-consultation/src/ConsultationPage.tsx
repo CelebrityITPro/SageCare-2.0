@@ -137,6 +137,12 @@ function ConsultationPage() {
         audioMixingRef.current.interval = 0;
       }
       
+      // Clear remote stream check interval
+      if ((audioMixingRef.current as any).remoteStreamCheckInterval) {
+        console.log('Clearing remote stream check interval...');
+        clearInterval((audioMixingRef.current as any).remoteStreamCheckInterval);
+      }
+      
       // Close WebSocket connection
       if (audioMixingRef.current.ws) {
         console.log('Closing WebSocket connection...');
@@ -272,9 +278,10 @@ function ConsultationPage() {
           if (msg.type === 'transcription' && msg.text) {
             // Handle different types of transcription results
             if (msg.final) {
-              // Final transcription - add to transcript with speaker name
+              // Final transcription - add to transcript
+              // Since we're mixing both local and remote audio, we can't reliably determine speaker
               const newEntry = {
-                speaker: displayName,
+                speaker: 'Meeting', // Generic label for mixed audio
                 text: msg.text.trim(),
                 timestamp: Date.now()
               };
@@ -287,7 +294,8 @@ function ConsultationPage() {
               
               // Update plain transcript for saving
               setTranscript(prev => {
-                const newTranscript = prev.trim() + (prev.trim() ? '\n' : '') + `${displayName}: ${msg.text.trim()}`;
+                const timestamp = new Date().toLocaleTimeString();
+                const newTranscript = prev.trim() + (prev.trim() ? '\n' : '') + `[${timestamp}] ${msg.text.trim()}`;
                 const deduplicated = removeDuplicates(newTranscript);
                 console.log('Final transcription added:', msg.text);
                 return deduplicated;
@@ -295,7 +303,7 @@ function ConsultationPage() {
             } else {
               // Interim transcription - always add as new entry
               const newEntry = {
-                speaker: displayName,
+                speaker: 'Meeting', // Generic label for mixed audio
                 text: msg.text.trim(),
                 timestamp: Date.now()
               };
@@ -379,6 +387,27 @@ function ConsultationPage() {
         remoteSource.connect(recorder);
         audioSources.push(remoteSource);
         console.log('Connected remote audio source');
+      }
+
+      // If no remote stream yet, set up a listener for when it becomes available
+      if (!remoteStreamRef.current) {
+        console.log('No remote stream available yet, will connect when available');
+        const checkRemoteStream = () => {
+          if (remoteStreamRef.current && audioMixingRef.current) {
+            console.log('Remote stream now available, connecting to audio mixer');
+            const remoteSource = ctx.createMediaStreamSource(remoteStreamRef.current);
+            remoteSource.connect(recorder);
+            audioSources.push(remoteSource);
+            console.log('Connected remote audio source (delayed)');
+            // Stop checking once connected
+            clearInterval(remoteStreamCheckInterval);
+          }
+        };
+        const remoteStreamCheckInterval = setInterval(checkRemoteStream, 1000);
+        // Store the interval for cleanup
+        if (audioMixingRef.current) {
+          (audioMixingRef.current as any).remoteStreamCheckInterval = remoteStreamCheckInterval;
+        }
       }
 
       // Connect recorder to a MediaStreamDestination to complete the audio graph
@@ -538,10 +567,13 @@ function ConsultationPage() {
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log('📡 Sending ICE candidate...');
+        console.log('📡 ICE candidate:', event.candidate);
         socket.emit('signal', {
           meetingId,
           data: { type: 'ice-candidate', candidate: event.candidate },
         });
+      } else {
+        console.log('📡 ICE candidate gathering complete');
       }
     };
 
@@ -550,10 +582,20 @@ function ConsultationPage() {
       console.log('📹 Remote stream received!');
       console.log('📹 Remote video ref exists:', !!remoteVideoRef.current);
       console.log('📹 Remote stream tracks:', event.streams[0].getTracks().map(t => t.kind));
+      console.log('📹 Participants count:', participants.length);
+      console.log('📹 Remote video element:', remoteVideoRef.current);
+      console.log('📹 Remote stream:', event.streams[0]);
       
       if (remoteVideoRef.current) {
         (remoteVideoRef.current).srcObject = event.streams[0];
         console.log('📹 Remote video stream set');
+        
+        // Force the remote video container to be visible immediately
+        const remoteVideoContainer = remoteVideoRef.current.parentElement;
+        if (remoteVideoContainer) {
+          remoteVideoContainer.style.display = 'block';
+          console.log('📹 Forced remote video container visible on stream receive');
+        }
         
         // Force the remote video to load and play
         (remoteVideoRef.current).load();
@@ -564,17 +606,42 @@ function ConsultationPage() {
         });
       } else {
         console.error('📹 Remote video ref is null!');
+        console.log('📹 DOM structure check:', document.querySelector('video[ref="remoteVideoRef"]'));
+        console.log('📹 All video elements:', document.querySelectorAll('video'));
       }
       remoteStreamRef.current = event.streams[0];
+      console.log('📹 Remote stream saved to ref');
     };
 
     // Add peer connection state change debugging
     pc.onconnectionstatechange = () => {
       console.log('🔗 Peer connection state changed:', pc.connectionState);
+      
+      // Clear remote stream when connection is lost
+      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        console.log('🔗 Peer connection lost, clearing remote stream');
+        if (remoteStreamRef.current) {
+          remoteStreamRef.current = null;
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+          }
+        }
+      }
     };
 
     pc.oniceconnectionstatechange = () => {
       console.log('🧊 ICE connection state changed:', pc.iceConnectionState);
+      
+      // Clear remote stream when ICE connection is lost
+      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+        console.log('🧊 ICE connection lost, clearing remote stream');
+        if (remoteStreamRef.current) {
+          remoteStreamRef.current = null;
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+          }
+        }
+      }
     };
 
     // 6. Get local media
@@ -702,13 +769,19 @@ function ConsultationPage() {
         // 7. Handle signaling
         socket.on('signal', async (data: any) => {
           console.log('📡 Received signal:', data.type);
+          console.log('📡 Signal data:', data);
+          console.log('📡 Current participants:', participants);
+          console.log('📡 Remote video ref exists:', !!remoteVideoRef.current);
+          
           try {
             if (data.type === 'offer') {
               console.log('📡 Processing offer...');
               await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+              console.log('📡 Remote description set successfully');
               const answer = await pc.createAnswer();
+              console.log('📡 Answer created:', answer);
               await pc.setLocalDescription(answer);
-              console.log('📡 Sending answer...');
+              console.log('📡 Local description set, sending answer...');
               socket.emit('signal', {
                 meetingId,
                 data: { type: 'answer', answer },
@@ -716,10 +789,12 @@ function ConsultationPage() {
             } else if (data.type === 'answer') {
               console.log('📡 Processing answer...');
               await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+              console.log('📡 Answer processed successfully');
             } else if (data.type === 'ice-candidate') {
               console.log('📡 Processing ICE candidate...');
               try {
                 await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                console.log('📡 ICE candidate added successfully');
               } catch (e) {
                 console.error('❌ Error adding ICE candidate:', e);
                 setError('Error adding received ICE candidate.');
@@ -727,6 +802,7 @@ function ConsultationPage() {
             }
           } catch (err) {
             console.error('❌ WebRTC signaling error:', err);
+            console.error('❌ Error details:', err instanceof Error ? err.message : String(err));
             setError('WebRTC signaling error: ' + (err instanceof Error ? err.message : String(err)));
           }
         });
@@ -751,6 +827,14 @@ function ConsultationPage() {
         // 9. Handle participant updates
         socket.on('participants', (participants: string[]) => {
           console.log('📡 Participants updated:', participants);
+          console.log('📡 Previous participants count:', participants.length);
+          console.log('📡 Remote video ref exists:', !!remoteVideoRef.current);
+          console.log('📡 Remote video element display:', remoteVideoRef.current?.style.display);
+          console.log('📡 Remote stream ref exists:', !!remoteStreamRef.current);
+          console.log('📡 Display condition check - participants.length > 1:', participants.length > 1);
+          console.log('📡 Display condition check - remoteStreamRef.current:', !!remoteStreamRef.current);
+          console.log('📡 Final display condition:', (participants.length > 1 || !!remoteStreamRef.current));
+          
           setParticipants(participants);
           
           // Create a mapping of participant names
@@ -761,7 +845,29 @@ function ConsultationPage() {
             }
           });
           setParticipantNames(namesMap);
+          
+          // Check if remote video should be visible
+          if (participants.length > 1 || remoteStreamRef.current) {
+            console.log('📡 Multiple participants or remote stream detected, remote video should be visible');
+            // Force a re-render to ensure remote video is shown
+            setTimeout(() => {
+              console.log('📡 Remote video ref after timeout:', !!remoteVideoRef.current);
+              console.log('📡 Remote video display after timeout:', remoteVideoRef.current?.style.display);
+              console.log('📡 Remote stream ref after timeout:', !!remoteStreamRef.current);
+            }, 100);
+          }
         });
+
+        // 10. Fallback: Request participants list if not received within 5 seconds
+        setTimeout(() => {
+          if (participants.length === 0) {
+            console.log('📡 No participants received, requesting participants list...');
+            socket.emit('signal', { 
+              meetingId, 
+              data: { type: 'get-participants' } 
+            });
+          }
+        }, 5000);
 
         socket.on('user-joined', (name: string) => {
           setNotifications(prev => [...prev, { type: 'join', name }]);
@@ -771,10 +877,23 @@ function ConsultationPage() {
         });
 
         socket.on('user-left', (name: string) => {
+          console.log('📡 User left:', name);
           setNotifications(prev => [...prev, { type: 'leave', name }]);
           setTimeout(() => {
             setNotifications(prev => prev.filter(n => !(n.type === 'leave' && n.name === name)));
           }, 3000);
+          
+          // Clear remote stream when user leaves
+          if (remoteStreamRef.current) {
+            console.log('📡 Clearing remote stream due to user leaving');
+            remoteStreamRef.current = null;
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = null;
+            }
+          }
+          
+          // Force re-render to hide remote video completely
+          setParticipants(prev => prev.filter(p => p !== name));
         });
 
         setLoading(false);
@@ -917,6 +1036,56 @@ function ConsultationPage() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+
+  // Effect to monitor remote video element rendering
+  useEffect(() => {
+    console.log('🔍 Remote video ref changed:', !!remoteVideoRef.current);
+    console.log('🔍 Participants count:', participants.length);
+    console.log('🔍 Remote video should be visible:', participants.length > 1);
+    console.log('🔍 Remote stream ref exists:', !!remoteStreamRef.current);
+    
+    if (remoteVideoRef.current) {
+      console.log('🔍 Remote video element found');
+      console.log('🔍 Remote video display style:', remoteVideoRef.current.style.display);
+      console.log('🔍 Remote video srcObject:', remoteVideoRef.current.srcObject);
+    } else {
+      console.log('🔍 Remote video ref is null');
+      // Check DOM structure
+      const allVideos = document.querySelectorAll('video');
+      console.log('🔍 All video elements in DOM:', allVideos.length);
+      allVideos.forEach((video, index) => {
+        console.log(`🔍 Video ${index}:`, video);
+      });
+    }
+  }, [participants.length]);
+
+  // Effect to force remote video visibility when we have a remote stream
+  useEffect(() => {
+    if (remoteStreamRef.current && remoteVideoRef.current) {
+      console.log('🔍 Remote stream available, ensuring video element is set up...');
+      // Force the remote video to be visible
+      const remoteVideoContainer = remoteVideoRef.current.parentElement;
+      if (remoteVideoContainer) {
+        remoteVideoContainer.style.display = 'block';
+        console.log('🔍 Forced remote video container to be visible');
+      }
+    }
+  }, [remoteStreamRef.current]);
+
+  // Monitor participants list changes and ensure remote video is visible when needed
+  useEffect(() => {
+    console.log('🔍 Participants list changed:', participants);
+    console.log('🔍 Remote stream exists:', !!remoteStreamRef.current);
+    console.log('🔍 Should show remote video:', (participants.length > 1 || !!remoteStreamRef.current));
+    
+    if ((participants.length > 1 || remoteStreamRef.current) && remoteVideoRef.current) {
+      const remoteVideoElement = remoteVideoRef.current;
+      if (remoteVideoElement.parentElement) {
+        remoteVideoElement.parentElement.style.display = 'block';
+        console.log('🔍 Forced remote video container visible due to participants/stream change');
+      }
+    }
+  }, [participants, remoteStreamRef.current]);
 
   // UI Controls
   const handleToggleAudio = () => {
@@ -1092,10 +1261,10 @@ function ConsultationPage() {
                     <div key={index} style={{ marginBottom: 8 }}>
                       <span style={{ 
                         fontWeight: 'bold', 
-                        color: entry.speaker === displayName ? '#3498db' : '#e74c3c',
+                        color: '#2c3e50',
                         marginRight: 8
                       }}>
-                        {entry.speaker}:
+                        Meeting [{new Date(entry.timestamp).toLocaleTimeString()}]:
                       </span>
                       <span>{entry.text}</span>
                     </div>
@@ -1291,26 +1460,7 @@ function ConsultationPage() {
                      {displayName}
                    </span>
                    
-                   {/* Video Overlay Captions */}
-                   {captionsEnabled && transcriptEntries.length > 0 && (
-                     <div style={{ 
-                       position: 'absolute', 
-                       bottom: 50, 
-                       left: 16, 
-                       right: 16, 
-                       background: 'rgba(0,0,0,0.8)', 
-                       color: '#fff', 
-                       padding: '8px 12px', 
-                       borderRadius: 6, 
-                       fontSize: 14, 
-                       lineHeight: 1.3,
-                       backdropFilter: 'blur(4px)',
-                       maxHeight: '60px',
-                       overflow: 'hidden'
-                     }}>
-                       {transcriptEntries.slice(-1)[0]?.text || ''}
-                     </div>
-                   )}
+
                  </div>
                  
                  {/* Remote Video */}
@@ -1322,7 +1472,7 @@ function ConsultationPage() {
                    overflow: 'hidden',
                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                    background: '#000',
-                   display: participants.length > 1 ? 'block' : 'none'
+                   display: (participants.length > 1 || remoteStreamRef.current) ? 'block' : 'none'
                  }}>
                    <video
                      ref={remoteVideoRef}
@@ -1347,33 +1497,87 @@ function ConsultationPage() {
                      fontSize: 14, 
                      backdropFilter: 'blur(4px)' 
                    }}>
-                     {participants.find(p => p !== displayName) || 'Remote'}
+                     {participants.find(p => p !== displayName) || 'Remote User'}
                    </span>
                    
-                   {/* Video Overlay Captions for Remote Video */}
-                   {captionsEnabled && transcriptEntries.length > 0 && (
-                     <div style={{ 
-                       position: 'absolute', 
-                       bottom: 50, 
-                       left: 16, 
-                       right: 16, 
-                       background: 'rgba(0,0,0,0.8)', 
-                       color: '#fff', 
-                       padding: '8px 12px', 
-                       borderRadius: 6, 
-                       fontSize: 14, 
-                       lineHeight: 1.3,
-                       backdropFilter: 'blur(4px)',
-                       maxHeight: '60px',
-                       overflow: 'hidden'
-                     }}>
-                       {transcriptEntries.slice(-1)[0]?.text || ''}
-                     </div>
-                   )}
+
                  </div>
                </div>
              </div>
            )}
+          
+          {/* Captions Section - Below Videos */}
+          {captionsEnabled && (
+            <div style={{ 
+              width: '100%',
+              maxWidth: '1200px',
+              margin: '24px auto',
+              background: 'rgba(0,0,0,0.9)',
+              borderRadius: 12,
+              padding: '20px',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                marginBottom: 16,
+                gap: 8
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+                  <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V6c0-1.1-.89-2-2-2zm0 14H5V6h14v12z"/>
+                  <text x="12" y="16" textAnchor="middle" fontSize="8" fill="currentColor" fontWeight="bold">CC</text>
+                </svg>
+                <h3 style={{ 
+                  margin: 0, 
+                  color: '#fff', 
+                  fontSize: '1.1rem',
+                  fontWeight: 600
+                }}>
+                  Live Transcription
+                </h3>
+              </div>
+              
+              <div style={{ 
+                minHeight: '60px',
+                padding: '12px',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {transcriptEntries.length === 0 ? (
+                  <p style={{ 
+                    margin: 0, 
+                    color: 'rgba(255,255,255,0.6)', 
+                    fontSize: '0.9rem',
+                    fontStyle: 'italic',
+                    textAlign: 'center'
+                  }}>
+                    🎤 Start speaking to see live captions...
+                  </p>
+                ) : (
+                  <div style={{ 
+                    width: '100%',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ 
+                      margin: 0, 
+                      color: '#fff', 
+                      fontSize: '1.1rem',
+                      lineHeight: 1.4,
+                      fontWeight: 500
+                    }}>
+                      {transcriptEntries[transcriptEntries.length - 1]?.text || ''}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
                      {/* Controls */}
            <div style={{ 

@@ -78,11 +78,20 @@ io.of('/signaling').on('connection', (socket) => {
     socket.join(meetingId);
     if (!rooms[meetingId]) rooms[meetingId] = {};
     rooms[meetingId][socket.id] = name || 'Anonymous';
-    // Broadcast updated participant list
-    io.of('/signaling').to(meetingId).emit('participants', Object.values(rooms[meetingId]));
-    // Notify others
-    socket.to(meetingId).emit('notification', { type: 'join', name: rooms[meetingId][socket.id] });
+    
+    // Log the current state
     console.log(`Socket ${socket.id} joined room ${meetingId} as ${name}`);
+    console.log(`Room ${meetingId} participants:`, Object.values(rooms[meetingId]));
+    console.log(`Emitting participants list to room ${meetingId}:`, Object.values(rooms[meetingId]));
+    
+    // Broadcast updated participant list to ALL users in the room (including the new user)
+    io.of('/signaling').to(meetingId).emit('participants', Object.values(rooms[meetingId]));
+    
+    // Also send the participants list directly to the new user to ensure they receive it
+    socket.emit('participants', Object.values(rooms[meetingId]));
+    
+    // Notify others about the new user
+    socket.to(meetingId).emit('notification', { type: 'join', name: rooms[meetingId][socket.id] });
   });
 
   socket.on('signal', ({ meetingId, data }) => {
@@ -90,6 +99,12 @@ io.of('/signaling').on('connection', (socket) => {
     if (data.type === 'ready') {
       // Notify the sender that they're ready to create offer
       socket.emit('ready');
+    } else if (data.type === 'get-participants') {
+      // Handle manual participants request
+      if (rooms[meetingId]) {
+        console.log(`Sending participants list to ${socket.id} for room ${meetingId}:`, Object.values(rooms[meetingId]));
+        socket.emit('participants', Object.values(rooms[meetingId]));
+      }
     } else {
       // Forward other signals to other participants
       socket.to(meetingId).emit('signal', data);
@@ -101,6 +116,8 @@ io.of('/signaling').on('connection', (socket) => {
       if (rooms[meetingId] && rooms[meetingId][socket.id]) {
         const name = rooms[meetingId][socket.id];
         delete rooms[meetingId][socket.id];
+        console.log(`Socket ${socket.id} (${name}) disconnecting from room ${meetingId}`);
+        console.log(`Updated participants for room ${meetingId}:`, Object.values(rooms[meetingId]));
         io.of('/signaling').to(meetingId).emit('participants', Object.values(rooms[meetingId]));
         socket.to(meetingId).emit('notification', { type: 'leave', name });
       }

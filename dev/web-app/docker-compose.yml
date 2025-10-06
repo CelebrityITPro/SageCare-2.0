@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # SageCare API (Backend)
+  sagecare-api:
+    build:
+      context: ./sage-care-api
+      dockerfile: Dockerfile
+    container_name: sagecare-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - DB_CONNECTION_URL=${DB_CONNECTION_URL:-mongodb+srv://sagecareadmin:SageCarev2INFO8665@sagecare.rqvneek.mongodb.net/?retryWrites=true&w=majority&appName=sagecare}
+      - JWT_SECRET=${JWT_SECRET:-myjwtsecretkeykhoseesaw123456789}
+      - PORT=5000
+      - PW_ENCRYPT_KEY=${PW_ENCRYPT_KEY:-mysecretkeykhoseesaw123456789}
+      - EMAIL_USER=${EMAIL_USER:-noreply.sagecare@gmail.com}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-jwer zmxj kvpw greo}
+    volumes:
+      - ./sage-care-api:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - sagecare-network
+
+  # SageCare Frontend (React)
+  sagecare-frontend:
+    build:
+      context: ./sage-care-frontend
+      dockerfile: Dockerfile
+    container_name: sagecare-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://sagecare-api:5000/api
+      - VITE_FOOD_API_URL=http://food-inference-api:5001
+      - VITE_AI_DIAGNOSIS_API_URL=http://ai-diagnosis-api:5002
+      - NODE_ENV=development
+    volumes:
+      - ./sage-care-frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - sagecare-api
+      - food-inference-api
+    networks:
+      - sagecare-network
+
+  # SageCare Consultation App
+  sagecare-consultation:
+    build:
+      context: ./sagecare-consultation
+      dockerfile: Dockerfile
+    container_name: sagecare-consultation
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://sagecare-api:5000
+      - REACT_APP_STT_URL=ws://sagecare-whisper-api:8001
+    volumes:
+      - ./sagecare-consultation:/app
+      - /app/node_modules
+    depends_on:
+      - sagecare-api
+      - sagecare-whisper-api
+    networks:
+      - sagecare-network
+
+  # SageCare Whisper API
+  sagecare-whisper-api:
+    build:
+      context: ./sagecare-whisper-api
+      dockerfile: Dockerfile
+    container_name: sagecare-whisper-api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./sagecare-whisper-api:/app
+    networks:
+      - sagecare-network
+
+  # Food Inference API (Python/ML)
+  food-inference-api:
+    build:
+      context: ./food-inference-api
+      dockerfile: Dockerfile
+    container_name: food-inference-api
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_APP=app.py
+      - PYTHONPATH=/app
+      - PORT=5001
+      - MONGODB_URI=${MONGODB_URI:-mongodb+srv://sagecareadmin:SageCarev2INFO8665@sagecare.rqvneek.mongodb.net/?retryWrites=true&w=majority&appName=sagecare}
+    volumes:
+      - ./food-inference-api:/app
+      - food_models:/app/models
+      - food_uploads:/app/uploads
+    networks:
+      - sagecare-network
+
+  # AI Diagnosis API (Python/Grok)
+  ai-diagnosis-api:
+    build:
+      context: ./ai-diagnosis-api
+      dockerfile: Dockerfile
+    container_name: ai-diagnosis-api
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_APP=app.py
+      - PYTHONPATH=/app
+      - PORT=5002
+      - GROK_API_URL=https://api.x.ai/v1
+      - GROK_API_KEY=${GROK_API_KEY}
+      - SAGECARE_API_URL=http://sagecare-api:5000/api
+    volumes:
+      - ./ai-diagnosis-api:/app
+    networks:
+      - sagecare-network
+
+networks:
+  sagecare-network:
+    driver: bridge
+
+volumes:
+  food_models:
+  food_uploads:

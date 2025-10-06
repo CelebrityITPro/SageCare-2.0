@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageCare 2.0 - User Journey Map Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .diagram-container {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .description {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 SageCare 2.0 - User Journey Map Diagrams</h1>
+        
+        <h2>1. 📊 Main User Journey Flow</h2>
+        <div class="description">
+            <strong>Description:</strong> Complete user journey from landing page through authentication, dashboard, appointment booking, video consultation, nutrition tracking, and AI medical assistant.
+        </div>
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TD
+    A[🌐 Landing Page<br/>First Visit] --> B{User Type?}
+    
+    B -->|New User| C[📝 Signup Process]
+    B -->|Returning User| D[🔐 Login]
+    
+    C --> C1[Step 1: Personal Info<br/>Name, Email, Password]
+    C1 --> C2[Step 2: Health Profile<br/>Age, Gender, Phone]
+    C2 --> C3[✅ Account Created]
+    
+    D --> D1[🔑 Authentication<br/>JWT Token]
+    
+    C3 --> E[🏠 Welcome Dashboard]
+    D1 --> E
+    
+    E --> E1[👋 Personalized Greeting<br/>Welcome, Name]
+    E --> E2[📅 Upcoming Appointments]
+    E --> E3[🍎 Nutrition Summary]
+    E --> E4[⚡ Quick Actions]
+    
+    E4 --> F[📋 Book Appointment]
+    E4 --> G[📸 Upload Meal]
+    E4 --> H[🤖 AI Medical Assistant]
+    
+    F --> F1[👨‍⚕️ Doctor Discovery<br/>Browse & Select]
+    F1 --> F2[📅 Appointment Booking<br/>Date, Time, Notes]
+    F2 --> F3[✅ Appointment Confirmed]
+    
+    F3 --> F4[📱 Appointment Management<br/>View, Edit, Cancel]
+    F4 --> F5[🎥 Join Video Consultation]
+    
+    F5 --> V1[🎬 Pre-Consultation<br/>Device Test, Waiting Room]
+    V1 --> V2[📹 Live Video Call<br/>WebRTC, Real-time Transcription]
+    V2 --> V3[📝 Post-Consultation<br/>Notes, Prescriptions, Follow-up]
+    
+    G --> G1[📸 Food Photo Upload]
+    G1 --> G2[🤖 AI Analysis<br/>Food Recognition, Nutrition Data]
+    G2 --> G3[📊 Nutrition Insights<br/>Calories, Macros, Recommendations]
+    G3 --> G4[📈 Health Tracking<br/>History, Trends, Goals]
+    
+    H --> H1[💬 AI Health Chat<br/>24/7 Medical Assistant]
+    H1 --> H2[🔍 Symptom Analysis<br/>AI-Powered Assessment]
+    H2 --> H3[📋 Health Recommendations<br/>Personalized Advice]
+    H3 --> H4[📊 AI Health Insights<br/>Continuous Monitoring]
+    
+    E --> I[🧭 Navigation Menu]
+    I --> J[📋 Appointments Page]
+    I --> K[🍎 Nutrition Page]
+    I --> L[🤖 AI Assistant Page]
+    I --> M[👤 Profile Page]
+    I --> N[⚙️ Settings Page]
+    
+    J --> J1[📅 All Appointments<br/>Upcoming, Past, Cancelled]
+    J1 --> J2[✏️ Edit Appointments]
+    J2 --> F4
+    
+    K --> K1[📸 Upload New Meal]
+    K1 --> G1
+    K --> K2[📊 Nutrition History]
+    K2 --> G4
+    K --> K3[💡 AI Recommendations]
+    K3 --> G4
+    
+    L --> L1[💬 Start AI Chat<br/>Health Questions]
+    L1 --> H1
+    L --> L2[📋 Chat History<br/>Previous Conversations]
+    L2 --> H4
+    L --> L3[🔍 Symptom Checker<br/>AI Assessment]
+    L3 --> H2
+    
+    M --> M1[👤 Update Profile<br/>Personal Info, Photo]
+    N --> N1[🔔 Notification Settings]
+    N --> N2[🔒 Privacy Settings]
+    N --> N3[⚙️ Account Settings]
+    
+    V3 --> SM1[✅ Consultation Complete]
+    G4 --> SM2[✅ Nutrition Tracked]
+    H4 --> SM3[✅ AI Health Assessment]
+    M1 --> SM4[✅ Profile Updated]
+    N1 --> SM4
+    
+    classDef entryPoint fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef auth fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef dashboard fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef appointment fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef video fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef nutrition fill:#e0f2f1,stroke:#004d40,stroke-width:2px
+    classDef aiAssistant fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    classDef settings fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    classDef success fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    
+    class A,B entryPoint
+    class C,C1,C2,C3,D,D1 auth
+    class E,E1,E2,E3,E4,I dashboard
+    class F,F1,F2,F3,F4,J,J1,J2 appointment
+    class V1,V2,V3 video
+    class G,G1,G2,G3,G4,K,K1,K2,K3 nutrition
+    class H,H1,H2,H3,H4,L,L1,L2,L3 aiAssistant
+    class M,M1,N,N1,N2,N3 settings
+    class SM1,SM2,SM3,SM4 success
+            </div>
+        </div>
+
+        <h2>2. 😊 User Emotions Throughout Journey</h2>
+        <div class="description">
+            <strong>Description:</strong> Emotional progression of users from initial curiosity to final satisfaction with the healthcare experience, including AI assistant interactions.
+        </div>
+        <div class="diagram-container">
+            <div class="mermaid">
+graph LR
+    subgraph "Initial Phase"
+        E1[😰 Anxious<br/>Health Concern]
+        E2[😌 Relieved<br/>Easy App Access]
+        E3[😊 Confident<br/>Quick Setup]
+    end
+    
+    subgraph "Interaction Phase"
+        E4[🤔 Curious<br/>Exploring Features]
+        E5[😌 Comfortable<br/>Familiar Interface]
+        E6[🤖 Intrigued<br/>AI Assistant Chat]
+    end
+    
+    subgraph "Service Phase"
+        E7[😌 Calm<br/>Video Consultation]
+        E8[🤖 Amazed<br/>AI Nutrition Analysis]
+        E9[💬 Engaged<br/>AI Health Chat]
+    end
+    
+    subgraph "Outcome Phase"
+        E10[😊 Satisfied<br/>Received Care]
+        E11[📊 Informed<br/>Health Insights]
+        E12[🎯 Empowered<br/>AI Assessment]
+        E13[✅ Confident<br/>Better Health]
+    end
+    
+    E1 --> E2 --> E3 --> E4 --> E5 --> E6
+    E6 --> E7
+    E6 --> E8
+    E6 --> E9
+    E7 --> E10
+    E8 --> E11
+    E9 --> E12
+    E10 --> E13
+    E11 --> E13
+    E12 --> E13
+            </div>
+        </div>
+
+        <h2>3. 🔧 Technology Integration Points</h2>
+        <div class="description">
+            <strong>Description:</strong> How different technology components work together to create the integrated healthcare platform, including AI medical assistant.
+        </div>
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TD
+    subgraph "Frontend (React + TypeScript)"
+        F1[📱 User Interface<br/>Chakra UI]
+        F2[🔄 State Management<br/>React Query]
+        F3[🧭 Navigation<br/>React Router]
+    end
+    
+    subgraph "Backend (Node.js + Express)"
+        B1[🔌 API Services<br/>RESTful Endpoints]
+        B2[🔐 Authentication<br/>JWT Tokens]
+        B3[💾 Database<br/>MongoDB]
+    end
+    
+    subgraph "AI/ML Services"
+        A1[🍎 Food Recognition<br/>Food-101 Model]
+        A2[🎤 Speech-to-Text<br/>Whisper API]
+        A3[🤖 AI Medical Assistant<br/>LLM Integration]
+        A4[🔍 Symptom Analysis<br/>Medical Knowledge Base]
+    end
+    
+    subgraph "Real-time Communication"
+        R1[📹 Video Calls<br/>WebRTC]
+        R2[📡 Signaling<br/>Socket.io]
+        R3[📝 Transcription<br/>Real-time Processing]
+        R4[💬 AI Chat Interface<br/>Instant Responses]
+    end
+    
+    F1 --> B1
+    F2 --> B1
+    F3 --> B1
+    B1 --> A1
+    B1 --> A2
+    B1 --> A3
+    B1 --> A4
+    B1 --> R1
+    R1 --> R2
+    R1 --> R3
+    A3 --> R4
+            </div>
+        </div>
+
+        <h2>4. 📈 Key Success Metrics Dashboard</h2>
+        <div class="description">
+            <strong>Description:</strong> Key performance indicators and success metrics for measuring the platform's effectiveness, including AI assistant metrics.
+        </div>
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TD
+    subgraph "User Engagement Metrics"
+        M1[📊 Daily Active Users<br/>Target: 1000+]
+        M2[⏱️ Session Duration<br/>Target: 15+ minutes]
+        M3[📈 Feature Adoption<br/>Target: 80%+]
+        M4[🤖 AI Assistant Usage<br/>Target: 80%+]
+    end
+    
+    subgraph "Healthcare Outcomes"
+        M5[✅ Appointment Completion<br/>Target: 95%+]
+        M6[😊 Consultation Satisfaction<br/>Target: 4.5/5]
+        M7[📊 Nutrition Tracking<br/>Target: 70%+]
+        M8[🤖 AI Chat Accuracy<br/>Target: 90%+]
+    end
+    
+    subgraph "Technical Performance"
+        M9[🎥 Video Call Quality<br/>Target: 99%+]
+        M10[🤖 AI Analysis Accuracy<br/>Target: 90%+]
+        M11[💬 AI Response Time<br/>Target: 95%+]
+        M12[🔄 System Uptime<br/>Target: 99.9%+]
+    end
+    
+    M1 --> M5
+    M2 --> M6
+    M3 --> M7
+    M4 --> M8
+    M9 --> M6
+    M10 --> M7
+    M11 --> M8
+    M12 --> M1
+            </div>
+        </div>
+
+        <h2>5. 🚀 Innovation Highlights</h2>
+        <div class="description">
+            <strong>Description:</strong> Key innovative features that set SageCare apart from traditional healthcare platforms, including AI medical assistant.
+        </div>
+        <div class="diagram-container">
+            <div class="mermaid">
+graph LR
+    subgraph "🏥 Integrated Healthcare"
+        I1[📅 Appointment Booking]
+        I2[🎥 Video Consultation]
+        I3[🍎 Nutrition Tracking]
+        I4[🤖 AI Medical Assistant]
+        I5[💡 Health Insights]
+    end
+    
+    subgraph "🤖 AI-Powered Features"
+        A1[📸 Food Analysis]
+        A2[🎤 Live Transcription]
+        A3[💬 AI Health Chat]
+        A4[🔍 Symptom Analysis]
+        A5[🧠 Smart Recommendations]
+    end
+    
+    subgraph "🔒 Security & Privacy"
+        S1[🔐 End-to-End Encryption]
+        S2[🛡️ HIPAA Compliance]
+        S3[🔒 Secure Data Handling]
+    end
+    
+    I1 --> I2
+    I2 --> I3
+    I3 --> I4
+    I4 --> I5
+    A1 --> A5
+    A2 --> A5
+    A3 --> A4 --> A5
+    S1 --> S2
+    S2 --> S3
+            </div>
+        </div>
+
+        <div class="description" style="margin-top: 40px; background: #e8f5e8; border-left-color: #27ae60;">
+            <h3>📋 How to Use These Diagrams:</h3>
+            <ul>
+                <li><strong>For Presentations:</strong> Screenshot each diagram and include in slides</li>
+                <li><strong>For Documentation:</strong> Export as PNG/SVG from browser</li>
+                <li><strong>For Development:</strong> Use as reference for implementing user flows</li>
+                <li><strong>For Stakeholders:</strong> Demonstrate comprehensive healthcare solution with AI assistant</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  whisper-api:
+    build: .
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONPATH=/app
+    command: python start_api.py
+    restart: unless-stopped
+    networks:
+      - whisper-network
+
+networks:
+  whisper-network:
+    driver: bridge 

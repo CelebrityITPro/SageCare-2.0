@@ -13,18 +13,16 @@ You can find a video walkthrough of the application [here](https://www.youtube.c
 - Food Nutritional Analysis from meal images
 - NLP-based diagnosis from free-text symptom input
 - Real-time speech-to-text transcription during video consultations
-- Personalized dietary recommendations and caregiver alerts
-- Role-based access for seniors and caregivers
 
 ## 🛠️ Technologies Used
 
 - Python, Flask (Backend API)
 - Azure DevOps Boards (Agile Project Management)
-- TensorFlow, PyTorch (ML Models)
+- PyTorch (ML Models)
 - Yolo (Computer Vision)
-- Whisper, Google Speech API (Speech-to-Text)
+- Whisper (Speech-to-Text)
 - BioBERT, Bioformer (NLP Diagnosis)
-- HuggingFace, Gradio (Deployment)
+- HuggingFace Models (NLP)
 - React Native (Mobile Frontend)
 - USDA Nutrition Database API
 
@@ -61,7 +59,6 @@ You can find a video walkthrough of the application [here](https://www.youtube.c
 - Owulu Amarachukwu
 - Palakodeti S. Ravi
 - Sharma Vaibhav
-- Prof. Anasuya Bhima (Advisor)
 
 ## 📄 License
 
